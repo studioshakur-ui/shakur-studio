@@ -4,6 +4,12 @@ import { AgentKind } from '../../lib/agents/types';
 import { Language, TranslationKey } from '../../i18n/translations';
 import { translate } from '../../i18n/config';
 
+const INDEX_BY_KIND: Record<AgentKind, string> = {
+  offer: '01',
+  audit: '02',
+  automation: '03'
+};
+
 interface AgentShellProps {
   kind: AgentKind;
   language: Language;
@@ -51,7 +57,7 @@ export function AgentShell({
   const isLoading = status === 'loading';
 
   return (
-    <article className={`agent-card agent-card--${kind}`}>
+    <article className={`agent-card agent-card--${kind}`} data-index={INDEX_BY_KIND[kind]}>
       <div className="agent-card__top">
         <div className="agent-card__icon">{icon}</div>
         <div className="agent-card__heading">
