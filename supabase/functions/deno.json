@@ -1,0 +1,14 @@
+{
+  "lock": false,
+  "compilerOptions": {
+    "lib": ["deno.window", "dom", "es2022"],
+    "strict": true
+  },
+  "fmt": {
+    "useTabs": false,
+    "lineWidth": 110,
+    "indentWidth": 2,
+    "singleQuote": true,
+    "semiColons": true
+  }
+}

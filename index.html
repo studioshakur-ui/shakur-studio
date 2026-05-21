@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#05070b" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f7f9fc" media="(prefers-color-scheme: light)" />
+    <meta name="description" content="CNCS.SYSTEMS — Cognitive Networked Control Systems. AI, Web and Automation systems built by SHAKUR. Test real front-facing agents in FR / IT / EN." />
+    <meta name="color-scheme" content="dark light" />
+
+    <meta property="og:title" content="CNCS.SYSTEMS — AI • Web • Automation" />
+    <meta property="og:description" content="Cognitive Networked Control Systems. Premium AI, Web and Automation studio built by SHAKUR. Try the live agents." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="CNCS.SYSTEMS" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="fr_FR" />
+    <meta property="og:locale:alternate" content="it_IT" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="CNCS.SYSTEMS — AI • Web • Automation" />
+    <meta name="twitter:description" content="Cognitive Networked Control Systems. Premium AI, Web and Automation studio built by SHAKUR." />
+
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2305070b'/%3E%3Cpath d='M9 11.5h6m-6 4.5h10m-10 4.5h6' stroke='%232ee8c8' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E" />
+
+    <title>CNCS.SYSTEMS — AI • Web • Automation</title>
+
+    <script>
+      (function () {
+        try {
+          var lang = localStorage.getItem('cncs-language');
+          if (lang === 'fr' || lang === 'it' || lang === 'en') {
+            document.documentElement.lang = lang;
+          } else {
+            var nav = (navigator.language || 'en').toLowerCase();
+            document.documentElement.lang = nav.startsWith('it') ? 'it' : nav.startsWith('fr') ? 'fr' : 'en';
+          }
+          var theme = localStorage.getItem('cncs-theme');
+          if (theme === 'dark' || theme === 'light') {
+            document.documentElement.dataset.theme = theme;
+          } else {
+            document.documentElement.dataset.theme = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+          }
+        } catch (_e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
