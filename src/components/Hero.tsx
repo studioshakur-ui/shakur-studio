@@ -30,7 +30,7 @@ export function Hero({ language }: HeroProps) {
         <div className="built-by"><span aria-hidden="true" />{t('hero.builtBy')}</div>
       </div>
 
-      <aside className="system-demo" aria-label="CNCS engine schema">
+      <aside className="system-demo" aria-label="SHAKUR engine schema">
         <div className="system-demo__node system-demo__node--input">
           <div className="system-demo__head">
             <MessageSquareText size={16} aria-hidden="true" />

@@ -16,7 +16,7 @@ export function Header({ language, theme, onLanguageChange, onThemeToggle }: Hea
   return (
     <header className="site-header">
       <a className="brand" href="#top" aria-label={t('a11y.brand')}>
-        <strong>CNCS</strong><span>.SYSTEMS</span>
+        <strong>SHAKUR</strong><span>STUDIO</span>
       </a>
       <nav className="desktop-nav" aria-label={t('a11y.nav')}>
         <a href="#agents">{t('nav.agents')}</a>

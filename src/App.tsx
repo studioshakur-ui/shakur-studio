@@ -49,7 +49,7 @@ export default function App() {
       </main>
       <footer className="site-footer">
         <div className="site-footer__brand">
-          <strong>CNCS.SYSTEMS</strong>
+          <strong>SHAKUR STUDIO</strong>
           <span>{t('footer.signature')}</span>
         </div>
         <p>{t('footer.tagline')}</p>
