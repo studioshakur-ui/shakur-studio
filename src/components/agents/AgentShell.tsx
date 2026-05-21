@@ -4,12 +4,6 @@ import { AgentKind } from '../../lib/agents/types';
 import { Language, TranslationKey } from '../../i18n/translations';
 import { translate } from '../../i18n/config';
 
-const INDEX_BY_KIND: Record<AgentKind, string> = {
-  offer: '01',
-  audit: '02',
-  automation: '03'
-};
-
 interface AgentShellProps {
   kind: AgentKind;
   language: Language;
@@ -26,6 +20,11 @@ interface AgentShellProps {
   onSubmit: () => void;
   onReset: () => void;
   onLoadExample?: () => void;
+  /**
+   * Optional post-result conversion footer rendered after `result`.
+   * The console uses this to surface inline WhatsApp / Email actions.
+   */
+  resultFooter?: ReactNode;
 }
 
 export function AgentShell({
@@ -43,7 +42,8 @@ export function AgentShell({
   submitKey,
   onSubmit,
   onReset,
-  onLoadExample
+  onLoadExample,
+  resultFooter
 }: AgentShellProps) {
   const t = (key: TranslationKey) => translate(language, key);
 
@@ -57,21 +57,26 @@ export function AgentShell({
   const isLoading = status === 'loading';
 
   return (
-    <article className={`agent-card agent-card--${kind}`} data-index={INDEX_BY_KIND[kind]}>
-      <div className="agent-card__top">
-        <div className="agent-card__icon">{icon}</div>
-        <div className="agent-card__heading">
+    <div className={`agent-panel agent-panel--${kind}`}>
+      <header className="agent-panel__head">
+        <div className="agent-panel__icon" aria-hidden="true">{icon}</div>
+        <div className="agent-panel__heading">
           <h3>{title}</h3>
           <p>{description}</p>
         </div>
-      </div>
+      </header>
 
       {!showResult && (
-        <form onSubmit={handleSubmit} className="agent-card__form" noValidate>
+        <form onSubmit={handleSubmit} className="agent-panel__form" noValidate>
           {form}
 
-          <div className="agent-card__actions">
-            <button type="submit" className="agent-card__submit" disabled={!canSubmit || isLoading} aria-busy={isLoading}>
+          <div className="agent-panel__actions">
+            <button
+              type="submit"
+              className="agent-panel__submit"
+              disabled={!canSubmit || isLoading}
+              aria-busy={isLoading}
+            >
               {isLoading ? (
                 <>
                   <Loader2 size={16} className="agent-spinner" aria-hidden="true" />
@@ -84,7 +89,7 @@ export function AgentShell({
               )}
             </button>
             {onLoadExample && !isLoading && (
-              <button type="button" className="agent-card__example" onClick={onLoadExample}>
+              <button type="button" className="agent-panel__example" onClick={onLoadExample}>
                 <Wand2 size={14} aria-hidden="true" /> {t('agents.tryExample')}
               </button>
             )}
@@ -110,11 +115,13 @@ export function AgentShell({
             </button>
           </div>
           {result}
-          <a className="agent-result__cta" href="#contact">
-            {t('agents.turnIntoSystem')} <ArrowRight size={15} aria-hidden="true" />
-          </a>
+          {resultFooter ?? (
+            <a className="agent-result__cta" href="#contact">
+              {t('agents.turnIntoSystem')} <ArrowRight size={15} aria-hidden="true" />
+            </a>
+          )}
         </div>
       )}
-    </article>
+    </div>
   );
 }

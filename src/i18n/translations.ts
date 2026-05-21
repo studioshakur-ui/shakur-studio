@@ -28,6 +28,8 @@ export type TranslationKey =
   | 'agents.kicker'
   | 'agents.title'
   | 'agents.copy'
+  | 'agents.console.tabsLabel'
+  | 'agents.console.eyebrow'
   | 'agents.tryExample'
   | 'agents.loading'
   | 'agents.result'
@@ -158,6 +160,8 @@ export const translations: Record<Language, Dictionary> = {
     'agents.kicker': 'Démonstration vivante',
     'agents.title': 'Trois agents, en façade.',
     'agents.copy': 'Décris un projet. L’agent renvoie un plan structuré, prêt à exécuter. Pas de slides. Pas de promesses.',
+    'agents.console.tabsLabel': 'Choisir l’agent',
+    'agents.console.eyebrow': 'Console',
     'agents.tryExample': 'Pré-remplir un exemple',
     'agents.loading': 'L’agent réfléchit…',
     'agents.result': 'Résultat',
@@ -285,6 +289,8 @@ export const translations: Record<Language, Dictionary> = {
     'agents.kicker': 'Demo viva',
     'agents.title': 'Tre agenti, in vetrina.',
     'agents.copy': 'Descrivi un progetto. L’agente restituisce un piano strutturato, pronto da eseguire. Senza slide, senza promesse.',
+    'agents.console.tabsLabel': 'Scegli l’agente',
+    'agents.console.eyebrow': 'Console',
     'agents.tryExample': 'Precompila un esempio',
     'agents.loading': 'L’agente sta pensando…',
     'agents.result': 'Risultato',
@@ -412,6 +418,8 @@ export const translations: Record<Language, Dictionary> = {
     'agents.kicker': 'Live demo',
     'agents.title': 'Three agents, on the front line.',
     'agents.copy': 'Describe a project. The agent returns a structured plan, ready to execute. No slides, no promises.',
+    'agents.console.tabsLabel': 'Choose the agent',
+    'agents.console.eyebrow': 'Console',
     'agents.tryExample': 'Pre-fill an example',
     'agents.loading': 'Agent is thinking…',
     'agents.result': 'Result',
