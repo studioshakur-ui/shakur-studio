@@ -48,7 +48,7 @@ export function CapabilitiesContact({ language }: CapabilitiesContactProps) {
         <p>{t('contact.copy')}</p>
         <div className="caps-contact__actions">
           <a className="button button--primary" href={`mailto:${site.contactEmail}`}>
-            {t('cta.startProject')} <ArrowRight size={16} aria-hidden="true" />
+            {t('hero.buildSystem')} <ArrowRight size={16} aria-hidden="true" />
           </a>
           {site.whatsappUrl && (
             <a className="button button--ghost" href={site.whatsappUrl} target="_blank" rel="noreferrer noopener">

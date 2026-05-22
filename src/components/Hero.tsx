@@ -26,7 +26,7 @@ export function Hero({ language }: HeroProps) {
             {t('hero.testAgent')} <ArrowRight size={17} aria-hidden="true" />
           </a>
           <a className="button button--ghost" href="#contact">
-            {t('hero.startProject')}
+            {t('hero.buildSystem')}
           </a>
         </div>
       </div>
