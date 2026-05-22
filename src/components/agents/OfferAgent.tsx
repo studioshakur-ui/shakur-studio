@@ -52,19 +52,21 @@ export function OfferAgent({ language }: OfferAgentProps) {
       onSubmit={() => run({ activity, audience: audience || undefined, goal: goal || undefined, tone, language })}
       onReset={handleReset}
       onLoadExample={loadExample}
-      form={
+      primaryField={
+        <label className="agent-field agent-field--primary">
+          <span>{t('agents.offer.primaryLabel')}</span>
+          <textarea
+            value={activity}
+            onChange={(event) => setActivity(event.target.value)}
+            placeholder={t('agents.offer.primaryPlaceholder')}
+            maxLength={600}
+            rows={3}
+            required
+          />
+        </label>
+      }
+      advancedFields={
         <>
-          <label className="agent-field">
-            <span>{t('agents.offer.primaryLabel')}</span>
-            <textarea
-              value={activity}
-              onChange={(event) => setActivity(event.target.value)}
-              placeholder={t('agents.offer.primaryPlaceholder')}
-              maxLength={600}
-              rows={3}
-              required
-            />
-          </label>
           <div className="agent-field-grid">
             <label className="agent-field">
               <span>{t('agents.offer.audienceLabel')}</span>

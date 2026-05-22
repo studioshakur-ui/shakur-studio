@@ -46,42 +46,42 @@ export function AuditAgent({ language }: AuditAgentProps) {
       onSubmit={() => run({ subject, audience: audience || undefined, objective: objective || undefined, language })}
       onReset={handleReset}
       onLoadExample={loadExample}
-      form={
-        <>
+      primaryField={
+        <label className="agent-field agent-field--primary">
+          <span>{t('agents.audit.primaryLabel')}</span>
+          <textarea
+            value={subject}
+            onChange={(event) => setSubject(event.target.value)}
+            placeholder={t('agents.audit.primaryPlaceholder')}
+            maxLength={600}
+            rows={3}
+            required
+          />
+        </label>
+      }
+      advancedFields={
+        <div className="agent-field-grid">
           <label className="agent-field">
-            <span>{t('agents.audit.primaryLabel')}</span>
-            <textarea
-              value={subject}
-              onChange={(event) => setSubject(event.target.value)}
-              placeholder={t('agents.audit.primaryPlaceholder')}
-              maxLength={600}
-              rows={3}
-              required
+            <span>{t('agents.audit.audienceLabel')}</span>
+            <input
+              type="text"
+              value={audience}
+              onChange={(event) => setAudience(event.target.value)}
+              placeholder={t('agents.audit.audiencePlaceholder')}
+              maxLength={240}
             />
           </label>
-          <div className="agent-field-grid">
-            <label className="agent-field">
-              <span>{t('agents.audit.audienceLabel')}</span>
-              <input
-                type="text"
-                value={audience}
-                onChange={(event) => setAudience(event.target.value)}
-                placeholder={t('agents.audit.audiencePlaceholder')}
-                maxLength={240}
-              />
-            </label>
-            <label className="agent-field">
-              <span>{t('agents.audit.objectiveLabel')}</span>
-              <input
-                type="text"
-                value={objective}
-                onChange={(event) => setObjective(event.target.value)}
-                placeholder={t('agents.audit.objectivePlaceholder')}
-                maxLength={240}
-              />
-            </label>
-          </div>
-        </>
+          <label className="agent-field">
+            <span>{t('agents.audit.objectiveLabel')}</span>
+            <input
+              type="text"
+              value={objective}
+              onChange={(event) => setObjective(event.target.value)}
+              placeholder={t('agents.audit.objectivePlaceholder')}
+              maxLength={240}
+            />
+          </label>
+        </div>
       }
       result={envelope ? <AuditResult output={envelope.result} mode={envelope.mode} language={language} /> : null}
       resultFooter={<AgentResultActions kind="audit" primaryInput={subject} language={language} />}

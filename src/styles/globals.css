@@ -20,10 +20,10 @@
   --muted: #9aa0a8;                 /* titanium gray */
 
   /* Edges */
-  --line: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.14);
-  --metal-highlight: rgba(255, 255, 255, 0.06);
-  --metal-shadow: rgba(0, 0, 0, 0.35);
+  --line: rgba(255, 255, 255, 0.06);
+  --line-strong: rgba(255, 255, 255, 0.12);
+  --metal-highlight: rgba(255, 255, 255, 0.05);
+  --metal-shadow: rgba(0, 0, 0, 0.32);
 
   /* Single restrained accent (titanium cyan-green) */
   --accent: #4dd4b8;
@@ -59,10 +59,10 @@
   --text: #1c1b18;                  /* soft graphite */
   --muted: #5b5854;                 /* titanium graphite */
 
-  --line: rgba(28, 27, 24, 0.12);
-  --line-strong: rgba(28, 27, 24, 0.22);
-  --metal-highlight: rgba(255, 255, 255, 0.7);
-  --metal-shadow: rgba(0, 0, 0, 0.05);
+  --line: rgba(28, 27, 24, 0.09);
+  --line-strong: rgba(28, 27, 24, 0.18);
+  --metal-highlight: rgba(255, 255, 255, 0.6);
+  --metal-shadow: rgba(0, 0, 0, 0.04);
 
   --accent: #0d8a76;                /* titanium teal, AA on warm white */
   --accent-strong: #0a7264;
@@ -488,7 +488,7 @@ main { max-width: 1180px; margin: 0 auto; }
    Agent Console — one surface, three tabs, single accent
    ============================================================ */
 
-.agent-console, .system-card, .cta-section {
+.agent-console {
   border-radius: var(--radius-xl);
   background:
     linear-gradient(180deg,
@@ -598,7 +598,7 @@ main { max-width: 1180px; margin: 0 auto; }
   margin-bottom: 4px;
 }
 .agent-panel__heading { min-width: 0; }
-.agent-panel__icon, .system-card__icon {
+.agent-panel__icon {
   width: 42px;
   height: 42px;
   flex: 0 0 42px;
@@ -613,12 +613,58 @@ main { max-width: 1180px; margin: 0 auto; }
   border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
   box-shadow: inset 0 1px 0 var(--metal-highlight);
 }
-.agent-panel h3, .system-card h3 { margin: 0 0 6px; font-size: 1.04rem; color: var(--text); }
-.agent-panel p, .system-card p { margin: 0; color: var(--muted); line-height: 1.55; font-size: 0.92rem; }
+.agent-panel h3 { margin: 0 0 6px; font-size: 1.04rem; color: var(--text); }
+.agent-panel p { margin: 0; color: var(--muted); line-height: 1.55; font-size: 0.92rem; }
 .agent-panel__form {
   display: grid;
-  gap: 12px;
+  gap: 14px;
   margin-top: 18px;
+}
+
+/* Primary input is bigger / quieter than a "form field" */
+.agent-field--primary > textarea {
+  min-height: 96px;
+  font-size: 1rem;
+  padding: 14px 16px;
+  background: color-mix(in srgb, var(--bg-soft) 86%, transparent);
+}
+.agent-field--primary > span {
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+}
+
+/* Collapsible advanced fields */
+
+.agent-panel__advanced {
+  display: grid;
+  gap: 12px;
+}
+.agent-panel__advanced-toggle {
+  justify-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px dashed var(--line-strong);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: color .15s ease, border-color .15s ease;
+}
+.agent-panel__advanced-toggle:hover {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 50%, transparent);
+}
+.agent-panel__advanced-toggle svg { transition: transform .25s ease; }
+.agent-panel__advanced.is-open .agent-panel__advanced-toggle svg { transform: rotate(180deg); }
+.agent-panel__advanced-body {
+  display: grid;
+  gap: 12px;
+  animation: bubble-in .25s ease both;
 }
 .agent-field {
   display: grid;
@@ -1353,62 +1399,92 @@ main { max-width: 1180px; margin: 0 auto; }
 }
 
 /* ============================================================
-   Capabilities / systems
+   Capabilities + final contact (single terminal section)
    ============================================================ */
 
-.systems-grid {
+.caps-contact {
+  display: grid;
+  gap: 60px;
+  padding-top: 80px;
+  padding-bottom: 8px;
+}
+
+/* Capabilities — quiet, inline, no panels */
+.caps-contact__caps { display: grid; gap: 24px; }
+.caps-contact__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  gap: 28px;
 }
-.system-card {
-  padding: 22px;
-  transition: border-color .2s ease, transform .2s ease;
-}
-.system-card:hover {
-  border-color: color-mix(in srgb, var(--accent) 32%, var(--line));
-  transform: translateY(-2px);
-}
-.system-card h3 { margin-top: 16px; }
-
-/* ============================================================
-   Final CTA
-   ============================================================ */
-
-.cta-section {
-  margin: 72px 0 24px;
-  border-radius: var(--radius-xl);
-  padding: clamp(28px, 4.4vw, 48px);
+.caps-contact__item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 26px;
-  position: relative;
+  align-items: flex-start;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
 }
-.cta-section__body { max-width: 640px; }
-.cta-section__eyebrow {
-  display: inline-flex;
+.caps-contact__icon {
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
   color: var(--accent);
-  font-weight: 800;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  font-size: 0.7rem;
-  margin-bottom: 10px;
+  background: var(--accent-soft);
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
 }
-.cta-section h2 {
-  font-size: clamp(1.7rem, 3.2vw, 2.4rem);
-  margin: 0 0 10px;
-  letter-spacing: -0.02em;
-  line-height: 1.15;
+.caps-contact__item h3 {
+  margin: 0 0 4px;
+  font-size: 0.98rem;
   color: var(--text);
 }
-.cta-section p { margin: 0; color: var(--muted); line-height: 1.6; }
-.cta-section__actions {
+.caps-contact__item p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+/* Final contact — naked text + buttons, no card chrome */
+.caps-contact__cta {
+  display: grid;
+  gap: 12px;
+  text-align: center;
+  justify-items: center;
+  margin: 4px auto 24px;
+  max-width: 760px;
+}
+.caps-contact__eyebrow {
+  display: inline-flex;
+  color: var(--accent);
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+}
+.caps-contact__cta h2 {
+  margin: 0;
+  font-size: clamp(1.9rem, 3.4vw, 2.6rem);
+  letter-spacing: -0.025em;
+  line-height: 1.12;
+  color: var(--text);
+}
+.caps-contact__cta p {
+  margin: 0;
+  max-width: 580px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.caps-contact__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
-  position: relative;
-  z-index: 1;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 10px;
 }
 
 /* ============================================================
@@ -1448,8 +1524,8 @@ main { max-width: 1180px; margin: 0 auto; }
     padding: 56px 0 36px;
     gap: 36px;
   }
-  .systems-grid { grid-template-columns: 1fr; }
-  .cta-section { align-items: flex-start; flex-direction: column; }
+  .caps-contact__list { grid-template-columns: 1fr; gap: 18px; }
+  .caps-contact { gap: 40px; }
   .site-footer { flex-direction: column; align-items: flex-start; }
   .site-footer p { text-align: left; }
   .header-actions .button--small { display: none; }
@@ -1460,8 +1536,7 @@ main { max-width: 1180px; margin: 0 auto; }
 @media (max-width: 680px) {
   .app-shell { padding: 12px; }
   .site-header { height: auto; padding: 12px 14px; top: 8px; }
-  .hero h1 { font-size: clamp(2.1rem, 9vw, 3.2rem); }
-  .system-demo { padding: 18px; }
+  .hero__title { font-size: clamp(1.9rem, 8.5vw, 2.8rem); }
   .agent-field-grid { grid-template-columns: 1fr; }
   .agent-scores { grid-template-columns: 1fr; }
   .agent-console__panel { padding: 20px 16px; }

@@ -1,5 +1,5 @@
-import { FormEvent, ReactNode } from 'react';
-import { ArrowRight, Loader2, RotateCcw, ShieldAlert, Wand2 } from 'lucide-react';
+import { FormEvent, ReactNode, useState } from 'react';
+import { ArrowRight, ChevronDown, Loader2, RotateCcw, ShieldAlert, Wand2 } from 'lucide-react';
 import { AgentKind } from '../../lib/agents/types';
 import { Language, TranslationKey } from '../../i18n/translations';
 import { translate } from '../../i18n/config';
@@ -13,17 +13,17 @@ interface AgentShellProps {
   status: 'idle' | 'loading' | 'success' | 'error';
   mode: 'live' | 'demo' | null;
   errorMessage: string | null;
-  form: ReactNode;
+  /** The one big primary input — always visible. */
+  primaryField: ReactNode;
+  /** Secondary fields tucked behind "Advanced" toggle. Optional. */
+  advancedFields?: ReactNode;
   result: ReactNode | null;
   canSubmit: boolean;
   submitKey: TranslationKey;
   onSubmit: () => void;
   onReset: () => void;
   onLoadExample?: () => void;
-  /**
-   * Optional post-result conversion footer rendered after `result`.
-   * The console uses this to surface inline WhatsApp / Email actions.
-   */
+  /** Optional post-result conversion footer rendered after `result`. */
   resultFooter?: ReactNode;
 }
 
@@ -36,7 +36,8 @@ export function AgentShell({
   status,
   mode,
   errorMessage,
-  form,
+  primaryField,
+  advancedFields,
   result,
   canSubmit,
   submitKey,
@@ -46,6 +47,7 @@ export function AgentShell({
   resultFooter
 }: AgentShellProps) {
   const t = (key: TranslationKey) => translate(language, key);
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -68,7 +70,24 @@ export function AgentShell({
 
       {!showResult && (
         <form onSubmit={handleSubmit} className="agent-panel__form" noValidate>
-          {form}
+          {primaryField}
+
+          {advancedFields && (
+            <div className={`agent-panel__advanced${showAdvanced ? ' is-open' : ''}`}>
+              <button
+                type="button"
+                className="agent-panel__advanced-toggle"
+                onClick={() => setShowAdvanced((v) => !v)}
+                aria-expanded={showAdvanced}
+              >
+                <ChevronDown size={14} aria-hidden="true" />
+                {showAdvanced ? t('agents.advanced.hide') : t('agents.advanced.show')}
+              </button>
+              {showAdvanced && (
+                <div className="agent-panel__advanced-body">{advancedFields}</div>
+              )}
+            </div>
+          )}
 
           <div className="agent-panel__actions">
             <button

@@ -5,8 +5,7 @@ import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { ShakurFlow } from './components/ShakurFlow';
 import { AgentsSection } from './components/AgentsSection';
-import { SystemsSection } from './components/SystemsSection';
-import { CtaSection } from './components/CtaSection';
+import { CapabilitiesContact } from './components/CapabilitiesContact';
 
 type Theme = 'dark' | 'light';
 
@@ -44,8 +43,7 @@ export default function App() {
         <Hero language={language} />
         <ShakurFlow language={language} />
         <AgentsSection language={language} />
-        <SystemsSection language={language} />
-        <CtaSection language={language} />
+        <CapabilitiesContact language={language} />
       </main>
       <footer className="site-footer">
         <div className="site-footer__brand">

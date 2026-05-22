@@ -46,42 +46,42 @@ export function AutomationAgent({ language }: AutomationAgentProps) {
       onSubmit={() => run({ workflow, tools: tools || undefined, desiredResult: desiredResult || undefined, language })}
       onReset={handleReset}
       onLoadExample={loadExample}
-      form={
-        <>
+      primaryField={
+        <label className="agent-field agent-field--primary">
+          <span>{t('agents.auto.primaryLabel')}</span>
+          <textarea
+            value={workflow}
+            onChange={(event) => setWorkflow(event.target.value)}
+            placeholder={t('agents.auto.primaryPlaceholder')}
+            maxLength={600}
+            rows={3}
+            required
+          />
+        </label>
+      }
+      advancedFields={
+        <div className="agent-field-grid">
           <label className="agent-field">
-            <span>{t('agents.auto.primaryLabel')}</span>
-            <textarea
-              value={workflow}
-              onChange={(event) => setWorkflow(event.target.value)}
-              placeholder={t('agents.auto.primaryPlaceholder')}
-              maxLength={600}
-              rows={3}
-              required
+            <span>{t('agents.auto.toolsLabel')}</span>
+            <input
+              type="text"
+              value={tools}
+              onChange={(event) => setTools(event.target.value)}
+              placeholder={t('agents.auto.toolsPlaceholder')}
+              maxLength={240}
             />
           </label>
-          <div className="agent-field-grid">
-            <label className="agent-field">
-              <span>{t('agents.auto.toolsLabel')}</span>
-              <input
-                type="text"
-                value={tools}
-                onChange={(event) => setTools(event.target.value)}
-                placeholder={t('agents.auto.toolsPlaceholder')}
-                maxLength={240}
-              />
-            </label>
-            <label className="agent-field">
-              <span>{t('agents.auto.resultLabel')}</span>
-              <input
-                type="text"
-                value={desiredResult}
-                onChange={(event) => setDesiredResult(event.target.value)}
-                placeholder={t('agents.auto.resultPlaceholder')}
-                maxLength={240}
-              />
-            </label>
-          </div>
-        </>
+          <label className="agent-field">
+            <span>{t('agents.auto.resultLabel')}</span>
+            <input
+              type="text"
+              value={desiredResult}
+              onChange={(event) => setDesiredResult(event.target.value)}
+              placeholder={t('agents.auto.resultPlaceholder')}
+              maxLength={240}
+            />
+          </label>
+        </div>
       }
       result={envelope ? <AutomationResult output={envelope.result} mode={envelope.mode} language={language} /> : null}
       resultFooter={<AgentResultActions kind="automation" primaryInput={workflow} language={language} />}
