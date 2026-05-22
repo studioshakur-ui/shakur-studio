@@ -26,7 +26,7 @@ export function CapabilitiesContact({ language }: CapabilitiesContactProps) {
 
   return (
     <section className="section caps-contact" id="contact">
-      <div className="caps-contact__caps">
+      <div className="caps-contact__caps" id="method">
         <div className="section-heading">
           <span>{t('caps.eyebrow')}</span>
           <h2>{t('caps.title')}</h2>

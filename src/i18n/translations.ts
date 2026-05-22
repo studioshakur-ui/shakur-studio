@@ -3,7 +3,7 @@ export type Language = 'fr' | 'it' | 'en';
 export type TranslationKey =
   /* navigation + global */
   | 'nav.agents'
-  | 'nav.flow'
+  | 'nav.method'
   | 'nav.contact'
   | 'cta.startProject'
   | 'cta.whatsapp'
@@ -24,23 +24,6 @@ export type TranslationKey =
   | 'hero.chain.agent'
   | 'hero.chain.system'
   | 'hero.chain.result'
-  /* shakur flow signature section */
-  | 'flow.eyebrow'
-  | 'flow.title'
-  | 'flow.copy'
-  | 'flow.step.idea'
-  | 'flow.step.agent'
-  | 'flow.step.system'
-  | 'flow.step.contact'
-  | 'flow.bubble.user'
-  | 'flow.bubble.agent'
-  | 'flow.plan.title'
-  | 'flow.plan.item1'
-  | 'flow.plan.item2'
-  | 'flow.plan.item3'
-  | 'flow.plan.item4'
-  | 'flow.contact.title'
-  | 'flow.contact.body'
   /* agent console */
   | 'agents.kicker'
   | 'agents.title'
@@ -153,7 +136,7 @@ type Dictionary = Record<TranslationKey, string>;
 export const translations: Record<Language, Dictionary> = {
   fr: {
     'nav.agents': 'Agents',
-    'nav.flow': 'Flow',
+    'nav.method': 'Méthode',
     'nav.contact': 'Contact',
     'cta.startProject': 'Démarrer un projet',
     'cta.whatsapp': 'WhatsApp',
@@ -174,23 +157,6 @@ export const translations: Record<Language, Dictionary> = {
     'hero.chain.agent': 'Agent',
     'hero.chain.system': 'Système',
     'hero.chain.result': 'Résultat',
-
-    'flow.eyebrow': 'The Shakur Flow',
-    'flow.title': 'Comment une idée devient un système.',
-    'flow.copy': 'Quatre étapes, une seule trajectoire. De l’intention initiale à l’exécution opérationnelle.',
-    'flow.step.idea': 'Idée',
-    'flow.step.agent': 'Agent',
-    'flow.step.system': 'Système',
-    'flow.step.contact': 'Contact',
-    'flow.bubble.user': 'J’ai besoin d’une meilleure manière de présenter mon offre et de capter des leads.',
-    'flow.bubble.agent': 'On clarifie l’offre, l’interface et le workflow. Voici le système.',
-    'flow.plan.title': 'Mini-plan généré',
-    'flow.plan.item1': 'Landing page premium',
-    'flow.plan.item2': 'Capture de leads structurée',
-    'flow.plan.item3': 'Relance WhatsApp automatique',
-    'flow.plan.item4': 'Automatisation simple',
-    'flow.contact.title': 'Continuer la conversation.',
-    'flow.contact.body': 'WhatsApp pour parler tout de suite. Email pour un brief plus détaillé.',
 
     'agents.kicker': 'Console',
     'agents.title': 'Trois agents. Une console.',
@@ -302,7 +268,7 @@ export const translations: Record<Language, Dictionary> = {
 
   it: {
     'nav.agents': 'Agenti',
-    'nav.flow': 'Flow',
+    'nav.method': 'Metodo',
     'nav.contact': 'Contatto',
     'cta.startProject': 'Avvia un progetto',
     'cta.whatsapp': 'WhatsApp',
@@ -323,23 +289,6 @@ export const translations: Record<Language, Dictionary> = {
     'hero.chain.agent': 'Agente',
     'hero.chain.system': 'Sistema',
     'hero.chain.result': 'Risultato',
-
-    'flow.eyebrow': 'The Shakur Flow',
-    'flow.title': 'Come un’idea diventa un sistema.',
-    'flow.copy': 'Quattro tappe, una sola traiettoria. Dall’intenzione iniziale all’esecuzione operativa.',
-    'flow.step.idea': 'Idea',
-    'flow.step.agent': 'Agente',
-    'flow.step.system': 'Sistema',
-    'flow.step.contact': 'Contatto',
-    'flow.bubble.user': 'Mi serve un modo migliore per presentare la mia offerta e catturare lead.',
-    'flow.bubble.agent': 'Chiariamo offerta, interfaccia e workflow. Ecco il sistema.',
-    'flow.plan.title': 'Mini-piano generato',
-    'flow.plan.item1': 'Landing page premium',
-    'flow.plan.item2': 'Cattura lead strutturata',
-    'flow.plan.item3': 'Follow-up automatico su WhatsApp',
-    'flow.plan.item4': 'Automazione semplice',
-    'flow.contact.title': 'Continuiamo la conversazione.',
-    'flow.contact.body': 'WhatsApp per parlare subito. Email per un brief più dettagliato.',
 
     'agents.kicker': 'Console',
     'agents.title': 'Tre agenti. Una console.',
@@ -451,7 +400,7 @@ export const translations: Record<Language, Dictionary> = {
 
   en: {
     'nav.agents': 'Agents',
-    'nav.flow': 'Flow',
+    'nav.method': 'Method',
     'nav.contact': 'Contact',
     'cta.startProject': 'Start a project',
     'cta.whatsapp': 'WhatsApp',
@@ -472,23 +421,6 @@ export const translations: Record<Language, Dictionary> = {
     'hero.chain.agent': 'Agent',
     'hero.chain.system': 'System',
     'hero.chain.result': 'Result',
-
-    'flow.eyebrow': 'The Shakur Flow',
-    'flow.title': 'How an idea becomes a system.',
-    'flow.copy': 'Four stages, one trajectory. From initial intent to operational execution.',
-    'flow.step.idea': 'Idea',
-    'flow.step.agent': 'Agent',
-    'flow.step.system': 'System',
-    'flow.step.contact': 'Contact',
-    'flow.bubble.user': 'I need a better way to present my offer and capture leads.',
-    'flow.bubble.agent': 'Let’s clarify the offer, the interface and the workflow. Here is the system.',
-    'flow.plan.title': 'Mini-plan generated',
-    'flow.plan.item1': 'Premium landing page',
-    'flow.plan.item2': 'Structured lead capture',
-    'flow.plan.item3': 'Automatic WhatsApp follow-up',
-    'flow.plan.item4': 'Simple automation',
-    'flow.contact.title': 'Continue the conversation.',
-    'flow.contact.body': 'WhatsApp to talk now. Email for a more detailed brief.',
 
     'agents.kicker': 'Console',
     'agents.title': 'Three agents. One console.',

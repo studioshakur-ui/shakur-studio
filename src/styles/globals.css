@@ -1,38 +1,42 @@
 /* ============================================================
-   SHAKUR STUDIO — Premium Minimal Metal
+   SHAKUR STUDIO — Titanium Ice / Platinum Metal
    Design tokens, surfaces, and component styles.
    ------------------------------------------------------------
-   Visual direction: graphite, titanium, soft off-white,
-   one restrained cyan-green accent. Industrial but elegant.
+   Visual direction: graphite, titanium, platinum, ice blue.
+   Single restrained ice-blue accent. No green. No purple.
    ============================================================ */
 
 :root {
   color-scheme: dark;
 
-  /* Surfaces */
-  --bg: #0c0d10;                    /* graphite black, neutral hue */
-  --bg-soft: #13151a;                /* deep charcoal */
-  --panel: rgba(26, 28, 33, 0.78);
-  --panel-strong: rgba(30, 33, 39, 0.92);
+  /* Surfaces — graphite with a faint cool undertone */
+  --bg: #0a0c10;                    /* graphite black */
+  --bg-soft: #12151b;                /* deep charcoal */
+  --panel: rgba(24, 28, 35, 0.78);
+  --panel-strong: rgba(28, 32, 40, 0.92);
 
-  /* Text */
-  --text: #ecebe6;                  /* warm polished off-white */
-  --muted: #9aa0a8;                 /* titanium gray */
+  /* Text — platinum */
+  --text: #e8eaf0;                  /* platinum */
+  --muted: #8a92a0;                 /* titanium gray */
 
   /* Edges */
-  --line: rgba(255, 255, 255, 0.06);
-  --line-strong: rgba(255, 255, 255, 0.12);
+  --line: rgba(232, 234, 240, 0.07);
+  --line-strong: rgba(232, 234, 240, 0.14);
   --metal-highlight: rgba(255, 255, 255, 0.05);
-  --metal-shadow: rgba(0, 0, 0, 0.32);
+  --metal-shadow: rgba(0, 0, 0, 0.34);
 
-  /* Single restrained accent (titanium cyan-green) */
-  --accent: #4dd4b8;
-  --accent-strong: #5fe3c6;
-  --accent-soft: rgba(77, 212, 184, 0.10);
+  /* Ice-blue / platinum accent — restrained, metallic, non-saturated */
+  --accent: #aac4e5;                /* ice blue */
+  --accent-strong: #c4d7ee;          /* polished platinum highlight */
+  --accent-deep: #6e8aa9;             /* cooler steel for depth */
+  --accent-soft: rgba(170, 196, 229, 0.10);
 
-  /* Secondary neutral metal — replaces the old cobalt + purple */
-  --metal-1: #7a8593;
-  --metal-2: #4a5260;
+  /* Neutral metals */
+  --metal-1: #8a92a0;                /* titanium */
+  --metal-2: #4a5260;                /* steel */
+
+  /* Optional micro-accent (used only in tiny moments, never as a primary color) */
+  --champagne: #c8b89a;
 
   --shadow: rgba(0, 0, 0, 0.45);
   --shadow-strong: rgba(0, 0, 0, 0.62);
@@ -50,29 +54,33 @@
 :root[data-theme='light'] {
   color-scheme: light;
 
-  /* Warm metal white, no SaaS pure-white */
-  --bg: #f1efe9;                    /* warm titanium */
-  --bg-soft: #faf8f2;
-  --panel: rgba(255, 254, 248, 0.86);
-  --panel-strong: rgba(255, 254, 248, 0.96);
+  /* Warm titanium white, no SaaS pure-white */
+  --bg: #f1eee8;                    /* warm titanium */
+  --bg-soft: #faf7f0;                /* light platinum */
+  --panel: rgba(255, 253, 247, 0.86);
+  --panel-strong: rgba(255, 253, 247, 0.96);
 
-  --text: #1c1b18;                  /* soft graphite */
-  --muted: #5b5854;                 /* titanium graphite */
+  --text: #161a21;                  /* deep graphite */
+  --muted: #586173;                 /* steel graphite */
 
-  --line: rgba(28, 27, 24, 0.09);
-  --line-strong: rgba(28, 27, 24, 0.18);
-  --metal-highlight: rgba(255, 255, 255, 0.6);
-  --metal-shadow: rgba(0, 0, 0, 0.04);
+  --line: rgba(22, 26, 33, 0.10);
+  --line-strong: rgba(22, 26, 33, 0.20);
+  --metal-highlight: rgba(255, 255, 255, 0.65);
+  --metal-shadow: rgba(0, 0, 0, 0.05);
 
-  --accent: #0d8a76;                /* titanium teal, AA on warm white */
-  --accent-strong: #0a7264;
-  --accent-soft: rgba(13, 138, 118, 0.10);
+  /* Light-mode accent: deeper ice blue (AA contrast against warm white) */
+  --accent: #2f5f8c;                 /* ice blue, deeper for AA */
+  --accent-strong: #1f4a73;
+  --accent-deep: #142f4f;
+  --accent-soft: rgba(47, 95, 140, 0.10);
 
-  --metal-1: #7d7770;
-  --metal-2: #5e5852;
+  --metal-1: #6e7585;
+  --metal-2: #3d4452;
 
-  --shadow: rgba(28, 27, 24, 0.10);
-  --shadow-strong: rgba(28, 27, 24, 0.18);
+  --champagne: #a08864;
+
+  --shadow: rgba(22, 26, 33, 0.10);
+  --shadow-strong: rgba(22, 26, 33, 0.18);
 }
 
 * { box-sizing: border-box; }
@@ -265,7 +273,7 @@ button, input, textarea, select { font: inherit; }
 .button:hover { transform: translateY(-1px); }
 
 .button--primary {
-  color: #0a1a16;
+  color: #0a1018;
   background:
     linear-gradient(180deg,
       color-mix(in srgb, var(--accent-strong) 100%, transparent),
@@ -771,7 +779,7 @@ main { max-width: 1180px; margin: 0 auto; }
 }
 .agent-panel__submit {
   border: 0;
-  color: #0a1a16;
+  color: #0a1018;
   background:
     linear-gradient(180deg,
       var(--accent-strong),
@@ -941,7 +949,7 @@ main { max-width: 1180px; margin: 0 auto; }
 }
 .agent-result__action:hover { transform: translateY(-1px); }
 .agent-result__action--whatsapp {
-  color: #0a1a16;
+  color: #0a1018;
   background:
     linear-gradient(180deg,
       var(--accent-strong),
@@ -1355,7 +1363,7 @@ main { max-width: 1180px; margin: 0 auto; }
 }
 .shakur-flow__action:hover { transform: translateY(-1px); }
 .shakur-flow__action--whatsapp {
-  color: #0a1a16;
+  color: #0a1018;
   background:
     linear-gradient(180deg,
       var(--accent-strong),

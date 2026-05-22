@@ -19,8 +19,8 @@ export function Header({ language, theme, onLanguageChange, onThemeToggle }: Hea
         <strong>SHAKUR</strong><span>STUDIO</span>
       </a>
       <nav className="desktop-nav" aria-label={t('a11y.nav')}>
-        <a href="#flow">{t('nav.flow')}</a>
         <a href="#agents">{t('nav.agents')}</a>
+        <a href="#method">{t('nav.method')}</a>
         <a href="#contact">{t('nav.contact')}</a>
       </nav>
       <div className="header-actions">
