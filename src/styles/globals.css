@@ -294,6 +294,17 @@ button, input, textarea, select { font: inherit; }
   border-color: var(--line-strong);
 }
 
+.button--ghost {
+  color: var(--text);
+  background: transparent;
+  border-color: var(--line-strong);
+  box-shadow: none;
+}
+.button--ghost:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+}
+
 .button--small { min-height: 36px; padding: 0 14px; font-size: 0.8rem; }
 
 /* ============================================================
@@ -303,163 +314,149 @@ button, input, textarea, select { font: inherit; }
 main { max-width: 1180px; margin: 0 auto; }
 
 /* ============================================================
-   Hero
+   Cinematic Hero — minimal, centered, calm
    ============================================================ */
 
 .hero {
+  padding: 96px 6px 72px;
   display: grid;
-  grid-template-columns: minmax(0, 1.05fr) minmax(380px, 0.95fr);
-  gap: 52px;
-  align-items: center;
-  padding: 72px 6px 56px;
+  place-items: center;
+}
+.hero__inner {
+  width: 100%;
+  max-width: 880px;
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 22px;
 }
 
-.kicker, .section-heading > span {
+.hero__eyebrow,
+.section-heading > span {
   display: inline-flex;
   color: var(--accent);
   font-weight: 700;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.32em;
   text-transform: uppercase;
   font-size: 0.72rem;
 }
 
-.hero h1 {
-  margin: 18px 0 22px;
-  font-size: clamp(2.4rem, 5.4vw, 4.6rem);
-  line-height: 1.02;
+.hero__title {
+  margin: 0;
+  font-size: clamp(2.2rem, 5vw, 4.2rem);
+  line-height: 1.04;
   letter-spacing: -0.035em;
   font-weight: 700;
   color: var(--text);
 }
-.hero h1 span { display: block; }
-.gradient-text {
+.hero__title-line { display: block; }
+.hero__title-line--accent {
   background:
     linear-gradient(120deg,
-      var(--text) 20%,
+      var(--text) 0%,
       var(--accent) 55%,
-      color-mix(in srgb, var(--text) 60%, var(--accent) 40%) 90%);
+      color-mix(in srgb, var(--text) 60%, var(--accent) 40%) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
-.hero p {
-  max-width: 540px;
-  color: var(--muted);
-  font-size: 1.04rem;
-  line-height: 1.65;
+
+.hero__tagline {
   margin: 0;
+  max-width: 640px;
+  color: var(--text);
+  font-size: clamp(1.04rem, 1.6vw, 1.18rem);
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  opacity: 0.92;
 }
-.hero__actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 28px; }
-.built-by {
-  margin-top: 22px;
+.hero__copy {
+  margin: 0;
+  max-width: 640px;
+  color: var(--muted);
+  font-size: 0.98rem;
+  line-height: 1.65;
+}
+
+.hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+  justify-content: center;
+}
+
+.hero__chain {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.74rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.hero__chain-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+}
+.hero__chain-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--accent);
+  opacity: 0.25;
+  animation: chain-step 5.6s ease-in-out infinite;
+}
+.hero__chain-item[data-index="1"] .hero__chain-dot { animation-delay: 1.4s; }
+.hero__chain-item[data-index="2"] .hero__chain-dot { animation-delay: 2.8s; }
+.hero__chain-item[data-index="3"] .hero__chain-dot { animation-delay: 4.2s; }
+@keyframes chain-step {
+  0%, 60%, 100% { opacity: 0.25; box-shadow: none; transform: scale(1); }
+  10%, 25% {
+    opacity: 1;
+    transform: scale(1.4);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 70%, transparent);
+  }
+}
+.hero__chain-label {
+  color: var(--muted);
+  transition: color .35s ease;
+}
+.hero__chain-line {
+  width: 28px;
+  height: 1px;
+  margin: 0 14px;
+  background: linear-gradient(90deg, var(--line-strong), color-mix(in srgb, var(--accent) 50%, transparent), var(--line-strong));
+  opacity: 0.5;
+}
+
+.hero__signature {
+  margin-top: 6px;
   display: inline-flex;
   align-items: center;
   gap: 10px;
   color: var(--muted);
-  font-size: 0.84rem;
-  font-weight: 700;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
 }
-.built-by span {
-  width: 7px;
-  height: 7px;
+.hero__signature-dot {
+  width: 6px;
+  height: 6px;
   border-radius: 999px;
   background: var(--accent);
   box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent);
 }
 
-/* ============================================================
-   Hero micro-system schema
-   ============================================================ */
-
-.system-demo {
-  display: grid;
-  gap: 10px;
-  padding: 22px;
-  border-radius: var(--radius-xl);
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--panel-strong) 100%, transparent),
-      color-mix(in srgb, var(--panel) 78%, transparent));
-  border: 1px solid var(--line);
-  box-shadow:
-    inset 0 1px 0 var(--metal-highlight),
-    inset 0 -1px 0 var(--metal-shadow),
-    0 18px 60px var(--shadow);
-  backdrop-filter: blur(14px);
-}
-
-.system-demo__node {
-  display: grid;
-  gap: 8px;
-  padding: 16px 18px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--bg-soft) 64%, transparent);
-  box-shadow: inset 0 1px 0 var(--metal-highlight);
-}
-.system-demo__node--engine {
-  border-color: color-mix(in srgb, var(--accent) 36%, transparent);
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--accent) 7%, transparent),
-      color-mix(in srgb, var(--bg-soft) 72%, transparent));
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--accent) 28%, transparent),
-    inset 0 -1px 0 var(--metal-shadow);
-}
-.system-demo__head {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.64rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  color: var(--muted);
-}
-.system-demo__node--engine .system-demo__head { color: var(--accent); }
-.system-demo__node p {
-  margin: 0;
-  font-size: 0.96rem;
-  line-height: 1.45;
-  color: var(--text);
-  font-weight: 500;
-}
-.system-demo__chain {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.88rem !important;
-  letter-spacing: 0.02em;
-  color: var(--text) !important;
-}
-
-.system-demo__pipe {
-  position: relative;
-  height: 18px;
-  margin: 0 28px;
-  overflow: hidden;
-}
-.system-demo__pipe::before {
-  content: '';
-  position: absolute;
-  inset: 50% 0 auto 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
-}
-.system-demo__pulse {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  width: 28%;
-  height: 1px;
-  transform: translateY(-50%);
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  animation: pipe-pulse 2.6s ease-in-out infinite;
-}
-.system-demo__pulse--delay { animation-delay: 1.3s; }
-@keyframes pipe-pulse {
-  0% { left: -28%; opacity: 0; }
-  20% { opacity: 1; }
-  100% { left: 100%; opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .hero__chain-dot { animation: none !important; opacity: 0.6 !important; }
 }
 
 /* ============================================================
@@ -491,7 +488,7 @@ main { max-width: 1180px; margin: 0 auto; }
    Agent Console — one surface, three tabs, single accent
    ============================================================ */
 
-.agent-console, .system-card, .cta-section, .process-chain {
+.agent-console, .system-card, .cta-section {
   border-radius: var(--radius-xl);
   background:
     linear-gradient(180deg,
@@ -1055,139 +1052,7 @@ main { max-width: 1180px; margin: 0 auto; }
 }
 
 /* ============================================================
-   Process — operating method as numbered chain
-   ============================================================ */
-
-.process { padding-top: 72px; }
-.process-chain {
-  position: relative;
-  border-radius: var(--radius-xl);
-  padding: 18px 14px 14px 14px;
-  margin: 0;
-  list-style: none;
-  display: grid;
-  gap: 8px;
-  --process-progress: 0%;
-}
-
-/* Vertical rail that "draws" downward as the active step advances */
-.process-chain__rail {
-  position: absolute;
-  left: 41px;
-  top: 36px;
-  bottom: 36px;
-  width: 1px;
-  background:
-    linear-gradient(180deg,
-      var(--accent) 0%,
-      var(--accent) var(--process-progress, 0%),
-      var(--line) var(--process-progress, 0%),
-      var(--line) 100%);
-  transition: background .6s ease;
-  pointer-events: none;
-}
-.process-chain__rail::after {
-  content: '';
-  position: absolute;
-  top: var(--process-progress, 0%);
-  left: 50%;
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  background: var(--accent);
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 12px color-mix(in srgb, var(--accent) 70%, transparent);
-  transition: top .6s ease;
-}
-
-.process-chain__step {
-  position: relative;
-  display: grid;
-  grid-template-columns: 56px 36px 1fr;
-  align-items: center;
-  gap: 16px;
-  padding: 16px 20px;
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--bg-soft) 38%, transparent);
-  border: 1px solid var(--line);
-  box-shadow: inset 0 1px 0 var(--metal-highlight);
-  color: var(--text);
-  cursor: pointer;
-  opacity: 0.7;
-  transition:
-    opacity .35s ease,
-    border-color .35s ease,
-    background .35s ease,
-    transform .35s ease;
-}
-.process-chain__step:hover { opacity: 0.92; transform: translateX(1px); }
-.process-chain__step.is-active {
-  opacity: 1;
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--accent) 8%, transparent),
-      color-mix(in srgb, var(--bg-soft) 56%, transparent));
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--accent) 26%, transparent),
-    inset 0 -1px 0 var(--metal-shadow),
-    0 8px 28px color-mix(in srgb, var(--accent) 16%, transparent);
-  transform: translateX(2px);
-}
-.process-chain__step:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--accent) 70%, transparent);
-  outline-offset: 2px;
-}
-
-.process-chain__index {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.72rem;
-  letter-spacing: 0.2em;
-  color: var(--muted);
-  font-weight: 800;
-  transition: color .35s ease;
-}
-.process-chain__step.is-active .process-chain__index { color: var(--accent); }
-
-.process-chain__icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  color: var(--muted);
-  background: color-mix(in srgb, var(--bg-soft) 60%, transparent);
-  border: 1px solid var(--line);
-  box-shadow: inset 0 1px 0 var(--metal-highlight);
-  transition: color .35s ease, background .35s ease, border-color .35s ease;
-}
-.process-chain__step.is-active .process-chain__icon {
-  color: var(--accent);
-  background: var(--accent-soft);
-  border-color: color-mix(in srgb, var(--accent) 32%, transparent);
-}
-
-.process-chain__body h3 {
-  margin: 0 0 4px;
-  font-size: 1.0rem;
-  letter-spacing: -0.01em;
-  color: var(--text);
-}
-.process-chain__body p {
-  margin: 0;
-  color: var(--muted);
-  line-height: 1.5;
-  font-size: 0.92rem;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .process-chain__step { opacity: 1 !important; }
-  .process-chain__rail { background: var(--accent) !important; }
-  .process-chain__rail::after { display: none; }
-}
-
-/* ============================================================
-   Systems / services
+   Capabilities / systems
    ============================================================ */
 
 .systems-grid {
@@ -1300,12 +1165,8 @@ main { max-width: 1180px; margin: 0 auto; }
   .agent-scores { grid-template-columns: 1fr; }
   .agent-console__panel { padding: 20px 16px; }
   .agent-console__tab { padding: 12px 14px; font-size: 0.86rem; }
-  .process-chain__step {
-    grid-template-columns: 44px 32px 1fr;
-    gap: 12px;
-    padding: 14px 16px;
-  }
-  .process-chain__rail { left: 36px; }
+  .hero__chain { font-size: 0.66rem; flex-wrap: wrap; row-gap: 10px; }
+  .hero__chain-line { width: 18px; margin: 0 8px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

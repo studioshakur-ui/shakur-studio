@@ -31,7 +31,7 @@ export function OfferAgent({ language }: OfferAgentProps) {
   }
 
   function loadExample() {
-    setActivity(t('agents.offer.activityExample'));
+    setActivity(t('agents.offer.primaryExample'));
     setAudience(t('agents.offer.audienceExample'));
     setGoal(t('agents.offer.goalExample'));
     setTone('premium');
@@ -55,11 +55,11 @@ export function OfferAgent({ language }: OfferAgentProps) {
       form={
         <>
           <label className="agent-field">
-            <span>{t('agents.offer.activityLabel')}</span>
+            <span>{t('agents.offer.primaryLabel')}</span>
             <textarea
               value={activity}
               onChange={(event) => setActivity(event.target.value)}
-              placeholder={t('agents.offer.activityPlaceholder')}
+              placeholder={t('agents.offer.primaryPlaceholder')}
               maxLength={600}
               rows={3}
               required

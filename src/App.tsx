@@ -5,7 +5,6 @@ import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { AgentsSection } from './components/AgentsSection';
 import { SystemsSection } from './components/SystemsSection';
-import { ProcessSection } from './components/ProcessSection';
 import { CtaSection } from './components/CtaSection';
 
 type Theme = 'dark' | 'light';
@@ -43,7 +42,6 @@ export default function App() {
       <main>
         <Hero language={language} />
         <AgentsSection language={language} />
-        <ProcessSection language={language} />
         <SystemsSection language={language} />
         <CtaSection language={language} />
       </main>

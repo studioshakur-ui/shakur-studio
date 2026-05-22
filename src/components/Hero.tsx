@@ -1,5 +1,5 @@
-import { ArrowRight, Cpu, MessageSquareText, Sparkles } from 'lucide-react';
-import { Language } from '../i18n/translations';
+import { ArrowRight } from 'lucide-react';
+import { Language, TranslationKey } from '../i18n/translations';
 import { translate } from '../i18n/config';
 
 interface HeroProps {
@@ -7,62 +7,50 @@ interface HeroProps {
 }
 
 export function Hero({ language }: HeroProps) {
-  const t = (key: Parameters<typeof translate>[1]) => translate(language, key);
+  const t = (key: TranslationKey) => translate(language, key);
+
+  const chain: TranslationKey[] = [
+    'hero.chain.idea',
+    'hero.chain.agent',
+    'hero.chain.system',
+    'hero.chain.result'
+  ];
 
   return (
     <section className="hero" id="top">
-      <div className="hero__copy">
-        <div className="kicker">{t('hero.kicker')}</div>
-        <h1>
-          <span>{t('hero.titleA')}</span>
-          <span>{t('hero.titleB')}</span>
-          <span className="gradient-text">{t('hero.titleC')}</span>
+      <div className="hero__inner">
+        <span className="hero__eyebrow">{t('hero.eyebrow')}</span>
+        <h1 className="hero__title">
+          <span className="hero__title-line">{t('hero.titleA')}</span>
+          <span className="hero__title-line hero__title-line--accent">{t('hero.titleB')}</span>
         </h1>
-        <p>{t('hero.copy')}</p>
+        <p className="hero__tagline">{t('hero.tagline')}</p>
+        <p className="hero__copy">{t('hero.copy')}</p>
+
         <div className="hero__actions">
           <a className="button button--primary" href="#agents">
-            {t('hero.explore')} <ArrowRight size={17} aria-hidden="true" />
+            {t('hero.testAgent')} <ArrowRight size={17} aria-hidden="true" />
           </a>
-          <a className="button button--secondary" href="#contact">
-            {t('hero.project')} <ArrowRight size={17} aria-hidden="true" />
+          <a className="button button--ghost" href="#contact">
+            {t('hero.startProject')}
           </a>
         </div>
-        <div className="built-by"><span aria-hidden="true" />{t('hero.builtBy')}</div>
+
+        <ol className="hero__chain" aria-label={`${t('hero.chain.idea')} → ${t('hero.chain.agent')} → ${t('hero.chain.system')} → ${t('hero.chain.result')}`}>
+          {chain.map((key, index) => (
+            <li key={key} className="hero__chain-item" data-index={index}>
+              <span className="hero__chain-dot" aria-hidden="true" />
+              <span className="hero__chain-label">{t(key)}</span>
+              {index < chain.length - 1 && <span className="hero__chain-line" aria-hidden="true" />}
+            </li>
+          ))}
+        </ol>
+
+        <div className="hero__signature">
+          <span className="hero__signature-dot" aria-hidden="true" />
+          {t('hero.builtBy')}
+        </div>
       </div>
-
-      <aside className="system-demo" aria-label="SHAKUR engine schema">
-        <div className="system-demo__node system-demo__node--input">
-          <div className="system-demo__head">
-            <MessageSquareText size={16} aria-hidden="true" />
-            <span>{t('hero.demo.input')}</span>
-          </div>
-          <p>{t('hero.demo.inputBody')}</p>
-        </div>
-
-        <div className="system-demo__pipe" aria-hidden="true">
-          <span className="system-demo__pulse" />
-        </div>
-
-        <div className="system-demo__node system-demo__node--engine">
-          <div className="system-demo__head">
-            <Cpu size={16} aria-hidden="true" />
-            <span>{t('hero.demo.engine')}</span>
-          </div>
-          <p className="system-demo__chain">{t('hero.demo.engineBody')}</p>
-        </div>
-
-        <div className="system-demo__pipe" aria-hidden="true">
-          <span className="system-demo__pulse system-demo__pulse--delay" />
-        </div>
-
-        <div className="system-demo__node system-demo__node--output">
-          <div className="system-demo__head">
-            <Sparkles size={16} aria-hidden="true" />
-            <span>{t('hero.demo.output')}</span>
-          </div>
-          <p>{t('hero.demo.outputBody')}</p>
-        </div>
-      </aside>
     </section>
   );
 }

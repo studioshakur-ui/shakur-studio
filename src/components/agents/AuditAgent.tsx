@@ -26,7 +26,7 @@ export function AuditAgent({ language }: AuditAgentProps) {
   }
 
   function loadExample() {
-    setSubject(t('agents.audit.subjectExample'));
+    setSubject(t('agents.audit.primaryExample'));
     setAudience(t('agents.audit.audienceExample'));
     setObjective(t('agents.audit.objectiveExample'));
   }
@@ -49,11 +49,11 @@ export function AuditAgent({ language }: AuditAgentProps) {
       form={
         <>
           <label className="agent-field">
-            <span>{t('agents.audit.subjectLabel')}</span>
+            <span>{t('agents.audit.primaryLabel')}</span>
             <textarea
               value={subject}
               onChange={(event) => setSubject(event.target.value)}
-              placeholder={t('agents.audit.subjectPlaceholder')}
+              placeholder={t('agents.audit.primaryPlaceholder')}
               maxLength={600}
               rows={3}
               required

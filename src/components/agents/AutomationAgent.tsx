@@ -26,7 +26,7 @@ export function AutomationAgent({ language }: AutomationAgentProps) {
   }
 
   function loadExample() {
-    setWorkflow(t('agents.auto.workflowExample'));
+    setWorkflow(t('agents.auto.primaryExample'));
     setTools(t('agents.auto.toolsExample'));
     setDesiredResult(t('agents.auto.resultExample'));
   }
@@ -49,11 +49,11 @@ export function AutomationAgent({ language }: AutomationAgentProps) {
       form={
         <>
           <label className="agent-field">
-            <span>{t('agents.auto.workflowLabel')}</span>
+            <span>{t('agents.auto.primaryLabel')}</span>
             <textarea
               value={workflow}
               onChange={(event) => setWorkflow(event.target.value)}
-              placeholder={t('agents.auto.workflowPlaceholder')}
+              placeholder={t('agents.auto.primaryPlaceholder')}
               maxLength={600}
               rows={3}
               required

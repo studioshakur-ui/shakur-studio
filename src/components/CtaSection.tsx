@@ -16,8 +16,8 @@ export function CtaSection({ language }: CtaSectionProps) {
     <section className="cta-section" id="contact">
       <div className="cta-section__body">
         <span className="cta-section__eyebrow">{t('contact.kicker')}</span>
-        <h2>{t('final.title')}</h2>
-        <p>{t('final.copy')}</p>
+        <h2>{t('contact.title')}</h2>
+        <p>{t('contact.copy')}</p>
       </div>
       <div className="cta-section__actions">
         {WHATSAPP_URL && (

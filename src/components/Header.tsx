@@ -19,15 +19,14 @@ export function Header({ language, theme, onLanguageChange, onThemeToggle }: Hea
         <strong>SHAKUR</strong><span>STUDIO</span>
       </a>
       <nav className="desktop-nav" aria-label={t('a11y.nav')}>
+        <a href="#flow">{t('nav.flow')}</a>
         <a href="#agents">{t('nav.agents')}</a>
-        <a href="#process">{t('nav.process')}</a>
-        <a href="#systems">{t('nav.systems')}</a>
         <a href="#contact">{t('nav.contact')}</a>
       </nav>
       <div className="header-actions">
         <LanguageSwitcher language={language} onChange={onLanguageChange} />
         <ThemeToggle theme={theme} onToggle={onThemeToggle} />
-        <a className="button button--small button--primary" href="#contact">{t('cta.build')}</a>
+        <a className="button button--small button--primary" href="#contact">{t('cta.startProject')}</a>
       </div>
     </header>
   );
