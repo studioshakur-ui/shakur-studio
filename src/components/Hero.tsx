@@ -1,6 +1,7 @@
 import { ArrowRight } from 'lucide-react';
 import { Language, TranslationKey } from '../i18n/translations';
 import { translate } from '../i18n/config';
+import { ShakurEngine } from './ShakurEngine';
 
 interface HeroProps {
   language: Language;
@@ -8,13 +9,6 @@ interface HeroProps {
 
 export function Hero({ language }: HeroProps) {
   const t = (key: TranslationKey) => translate(language, key);
-
-  const chain: TranslationKey[] = [
-    'hero.chain.idea',
-    'hero.chain.agent',
-    'hero.chain.system',
-    'hero.chain.result'
-  ];
 
   return (
     <section className="hero" id="top">
@@ -35,21 +29,13 @@ export function Hero({ language }: HeroProps) {
             {t('hero.startProject')}
           </a>
         </div>
+      </div>
 
-        <ol className="hero__chain" aria-label={`${t('hero.chain.idea')} → ${t('hero.chain.agent')} → ${t('hero.chain.system')} → ${t('hero.chain.result')}`}>
-          {chain.map((key, index) => (
-            <li key={key} className="hero__chain-item" data-index={index}>
-              <span className="hero__chain-dot" aria-hidden="true" />
-              <span className="hero__chain-label">{t(key)}</span>
-              {index < chain.length - 1 && <span className="hero__chain-line" aria-hidden="true" />}
-            </li>
-          ))}
-        </ol>
+      <ShakurEngine ariaLabel={`${t('hero.titleA')} ${t('hero.titleB')}`} />
 
-        <div className="hero__signature">
-          <span className="hero__signature-dot" aria-hidden="true" />
-          {t('hero.builtBy')}
-        </div>
+      <div className="hero__signature">
+        <span className="hero__signature-dot" aria-hidden="true" />
+        {t('hero.builtBy')}
       </div>
     </section>
   );

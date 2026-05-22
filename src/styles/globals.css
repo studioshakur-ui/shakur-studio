@@ -322,21 +322,23 @@ button, input, textarea, select { font: inherit; }
 main { max-width: 1180px; margin: 0 auto; }
 
 /* ============================================================
-   Cinematic Hero — minimal, centered, calm
+   Cinematic Hero — copy + The Shakur Engine animation
    ============================================================ */
 
 .hero {
-  padding: 96px 6px 72px;
+  padding: 84px 6px 40px;
   display: grid;
-  place-items: center;
+  justify-items: center;
+  gap: 36px;
 }
+
 .hero__inner {
   width: 100%;
   max-width: 880px;
   text-align: center;
   display: grid;
   justify-items: center;
-  gap: 22px;
+  gap: 18px;
 }
 
 .hero__eyebrow,
@@ -351,7 +353,7 @@ main { max-width: 1180px; margin: 0 auto; }
 
 .hero__title {
   margin: 0;
-  font-size: clamp(2.2rem, 5vw, 4.2rem);
+  font-size: clamp(2.1rem, 4.6vw, 3.8rem);
   line-height: 1.04;
   letter-spacing: -0.035em;
   font-weight: 700;
@@ -362,8 +364,8 @@ main { max-width: 1180px; margin: 0 auto; }
   background:
     linear-gradient(120deg,
       var(--text) 0%,
-      var(--accent) 55%,
-      color-mix(in srgb, var(--text) 60%, var(--accent) 40%) 100%);
+      var(--accent-strong) 55%,
+      var(--accent) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -373,7 +375,7 @@ main { max-width: 1180px; margin: 0 auto; }
   margin: 0;
   max-width: 640px;
   color: var(--text);
-  font-size: clamp(1.04rem, 1.6vw, 1.18rem);
+  font-size: clamp(1.02rem, 1.5vw, 1.16rem);
   font-weight: 500;
   letter-spacing: -0.005em;
   opacity: 0.92;
@@ -382,7 +384,7 @@ main { max-width: 1180px; margin: 0 auto; }
   margin: 0;
   max-width: 640px;
   color: var(--muted);
-  font-size: 0.98rem;
+  font-size: 0.96rem;
   line-height: 1.65;
 }
 
@@ -390,68 +392,16 @@ main { max-width: 1180px; margin: 0 auto; }
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 6px;
+  margin-top: 4px;
   justify-content: center;
-}
-
-.hero__chain {
-  list-style: none;
-  margin: 14px 0 0;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 0.74rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.hero__chain-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  position: relative;
-}
-.hero__chain-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: var(--accent);
-  opacity: 0.25;
-  animation: chain-step 5.6s ease-in-out infinite;
-}
-.hero__chain-item[data-index="1"] .hero__chain-dot { animation-delay: 1.4s; }
-.hero__chain-item[data-index="2"] .hero__chain-dot { animation-delay: 2.8s; }
-.hero__chain-item[data-index="3"] .hero__chain-dot { animation-delay: 4.2s; }
-@keyframes chain-step {
-  0%, 60%, 100% { opacity: 0.25; box-shadow: none; transform: scale(1); }
-  10%, 25% {
-    opacity: 1;
-    transform: scale(1.4);
-    box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 70%, transparent);
-  }
-}
-.hero__chain-label {
-  color: var(--muted);
-  transition: color .35s ease;
-}
-.hero__chain-line {
-  width: 28px;
-  height: 1px;
-  margin: 0 14px;
-  background: linear-gradient(90deg, var(--line-strong), color-mix(in srgb, var(--accent) 50%, transparent), var(--line-strong));
-  opacity: 0.5;
 }
 
 .hero__signature {
-  margin-top: 6px;
   display: inline-flex;
   align-items: center;
   gap: 10px;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.04em;
 }
@@ -463,8 +413,197 @@ main { max-width: 1180px; margin: 0 auto; }
   box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent);
 }
 
+/* ============================================================
+   The Shakur Engine
+   ------------------------------------------------------------
+   Wide cinematic plate. Three layered modules (WEB / AI /
+   AUTOMATION) converge through pulsing ice-blue wires into
+   a single SYSTEM core.
+   ============================================================ */
+
+.engine {
+  width: 100%;
+  max-width: 1180px;
+  padding: 0 6px;
+}
+.engine__bay {
+  position: relative;
+  aspect-ratio: 1200 / 360;
+  width: 100%;
+  border-radius: 18px;
+  background:
+    radial-gradient(
+      120% 80% at 50% 110%,
+      color-mix(in srgb, var(--accent) 8%, transparent) 0%,
+      transparent 60%
+    ),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--bg-soft) 96%, white 4%) 0%,
+      var(--bg-soft) 60%,
+      color-mix(in srgb, var(--bg-soft) 92%, black 8%) 100%);
+  border: 1px solid var(--line-strong);
+  box-shadow:
+    inset 0 1px 0 var(--metal-highlight),
+    inset 0 -1px 0 var(--metal-shadow),
+    0 30px 80px var(--shadow-strong);
+  overflow: hidden;
+  isolation: isolate;
+  color: var(--accent);
+}
+/* Subtle inner well */
+.engine__bay::before {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--bg) 96%, transparent),
+      color-mix(in srgb, var(--bg-soft) 80%, transparent));
+  pointer-events: none;
+  z-index: 0;
+}
+
+.engine__logic,
+.engine__wires {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.engine__logic { opacity: 0.5; mix-blend-mode: screen; }
+
+.engine__wire {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+  fill: none;
+}
+.engine__pulse {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  fill: none;
+  stroke-linecap: round;
+  stroke-dasharray: 90 770;
+  stroke-dashoffset: 860;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 65%, transparent));
+  animation: engine-pulse 4.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.engine__pulse--web  { animation-delay: 0s; }
+.engine__pulse--ai   { animation-delay: 1.2s; }
+.engine__pulse--auto { animation-delay: 2.4s; }
+@keyframes engine-pulse {
+  0%   { stroke-dashoffset: 860; opacity: 0; }
+  10%  { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+
+/* Modules positioned in % over the bay's 1200x360 viewBox */
+.engine__module {
+  position: absolute;
+  z-index: 2;
+  left: 4%;
+  width: 13%;
+  min-width: 92px;
+  height: 14%;
+  min-height: 36px;
+  display: grid;
+  place-items: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: clamp(0.62rem, 0.9vw, 0.78rem);
+  letter-spacing: 0.22em;
+  color: var(--text);
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--panel-strong) 100%, transparent),
+      color-mix(in srgb, var(--panel) 80%, transparent));
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  box-shadow:
+    inset 0 1px 0 var(--metal-highlight),
+    inset 0 -1px 0 var(--metal-shadow),
+    0 4px 14px color-mix(in srgb, var(--shadow) 70%, transparent);
+}
+.engine__module--web  { top: 13%; }
+.engine__module--ai   { top: 43%; }
+.engine__module--auto { top: 73%; width: 16%; }
+
+/* SYSTEM plate — right side, brighter, slight inner ice-blue glow */
+.engine__system {
+  position: absolute;
+  z-index: 2;
+  right: 4%;
+  top: 28%;
+  width: 18%;
+  min-width: 124px;
+  height: 44%;
+  min-height: 80px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background:
+    radial-gradient(120% 100% at 50% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%),
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--panel-strong) 100%, transparent),
+      color-mix(in srgb, var(--panel) 70%, transparent));
+  border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--line-strong));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--accent) 24%, transparent),
+    inset 0 -1px 0 var(--metal-shadow),
+    0 10px 28px color-mix(in srgb, var(--accent) 14%, transparent),
+    0 6px 18px var(--shadow);
+}
+.engine__system-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: clamp(0.74rem, 1vw, 0.92rem);
+  letter-spacing: 0.3em;
+  font-weight: 700;
+  color: var(--text);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+.engine__system-core {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  filter: blur(1px);
+  opacity: 0.85;
+  animation: engine-core-glow 3.6s ease-in-out infinite;
+}
+@keyframes engine-core-glow {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+
+/* Cinematic scan reflection — slow diagonal sweep */
+.engine__scan {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    transparent 40%,
+    color-mix(in srgb, var(--accent-strong) 14%, transparent) 50%,
+    transparent 60%,
+    transparent 100%);
+  transform: translateX(-100%);
+  animation: engine-scan 14s linear infinite;
+  mix-blend-mode: screen;
+}
+@keyframes engine-scan {
+  0%   { transform: translateX(-100%); }
+  60%  { transform: translateX(100%); }
+  100% { transform: translateX(100%); }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .hero__chain-dot { animation: none !important; opacity: 0.6 !important; }
+  .engine__pulse { animation: none !important; stroke-dashoffset: 0; opacity: 0.5; }
+  .engine__scan { animation: none !important; opacity: 0; }
+  .engine__system-core { animation: none !important; opacity: 0.7; }
 }
 
 /* ============================================================
@@ -1528,10 +1667,12 @@ main { max-width: 1180px; margin: 0 auto; }
 @media (max-width: 980px) {
   .desktop-nav { display: none; }
   .hero {
-    grid-template-columns: 1fr;
-    padding: 56px 0 36px;
-    gap: 36px;
+    padding: 56px 0 32px;
+    gap: 28px;
   }
+  .engine__bay { aspect-ratio: 4 / 3; }
+  .engine__module { font-size: 0.62rem; }
+  .engine__module--auto { width: 22%; }
   .caps-contact__list { grid-template-columns: 1fr; gap: 18px; }
   .caps-contact { gap: 40px; }
   .site-footer { flex-direction: column; align-items: flex-start; }

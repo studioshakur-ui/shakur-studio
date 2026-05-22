@@ -20,10 +20,6 @@ export type TranslationKey =
   | 'hero.testAgent'
   | 'hero.startProject'
   | 'hero.builtBy'
-  | 'hero.chain.idea'
-  | 'hero.chain.agent'
-  | 'hero.chain.system'
-  | 'hero.chain.result'
   /* agent console */
   | 'agents.kicker'
   | 'agents.title'
@@ -153,10 +149,6 @@ export const translations: Record<Language, Dictionary> = {
     'hero.testAgent': 'Tester un agent',
     'hero.startProject': 'Démarrer un projet',
     'hero.builtBy': 'Construit par SHAKUR',
-    'hero.chain.idea': 'Idée',
-    'hero.chain.agent': 'Agent',
-    'hero.chain.system': 'Système',
-    'hero.chain.result': 'Résultat',
 
     'agents.kicker': 'Console',
     'agents.title': 'Trois agents. Une console.',
@@ -285,10 +277,6 @@ export const translations: Record<Language, Dictionary> = {
     'hero.testAgent': 'Provare un agente',
     'hero.startProject': 'Avvia un progetto',
     'hero.builtBy': 'Costruito da SHAKUR',
-    'hero.chain.idea': 'Idea',
-    'hero.chain.agent': 'Agente',
-    'hero.chain.system': 'Sistema',
-    'hero.chain.result': 'Risultato',
 
     'agents.kicker': 'Console',
     'agents.title': 'Tre agenti. Una console.',
@@ -417,10 +405,6 @@ export const translations: Record<Language, Dictionary> = {
     'hero.testAgent': 'Test an agent',
     'hero.startProject': 'Start a project',
     'hero.builtBy': 'Built by SHAKUR',
-    'hero.chain.idea': 'Idea',
-    'hero.chain.agent': 'Agent',
-    'hero.chain.system': 'System',
-    'hero.chain.result': 'Result',
 
     'agents.kicker': 'Console',
     'agents.title': 'Three agents. One console.',
