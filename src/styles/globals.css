@@ -421,189 +421,278 @@ main { max-width: 1180px; margin: 0 auto; }
    a single SYSTEM core.
    ============================================================ */
 
+/* ============================================================
+   The Shakur Engine
+   ------------------------------------------------------------
+   Brushed graphite plate. Kinetic typography reveal:
+   WEB → AI → AUTOMATION → SYSTEM → SHAKUR seal.
+   No node graph, no schema, no wires.
+   ============================================================ */
+
 .engine {
   width: 100%;
-  max-width: 1180px;
+  max-width: 1100px;
   padding: 0 6px;
 }
-.engine__bay {
+.engine__plate {
   position: relative;
-  aspect-ratio: 1200 / 360;
+  aspect-ratio: 16 / 7;
   width: 100%;
   border-radius: 18px;
+  overflow: hidden;
+  isolation: isolate;
+  color: var(--accent);
+  /* Brushed graphite: two layered gradients to imply directional grain. */
   background:
     radial-gradient(
-      120% 80% at 50% 110%,
-      color-mix(in srgb, var(--accent) 8%, transparent) 0%,
-      transparent 60%
+      140% 90% at 50% 110%,
+      color-mix(in srgb, var(--accent) 7%, transparent) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      120% 80% at 50% -10%,
+      color-mix(in srgb, var(--platinum, var(--text)) 10%, transparent) 0%,
+      transparent 50%
     ),
     linear-gradient(180deg,
-      color-mix(in srgb, var(--bg-soft) 96%, white 4%) 0%,
-      var(--bg-soft) 60%,
-      color-mix(in srgb, var(--bg-soft) 92%, black 8%) 100%);
+      color-mix(in srgb, var(--bg) 92%, white 8%) 0%,
+      var(--bg-soft) 55%,
+      color-mix(in srgb, var(--bg-soft) 88%, black 12%) 100%);
   border: 1px solid var(--line-strong);
   box-shadow:
     inset 0 1px 0 var(--metal-highlight),
     inset 0 -1px 0 var(--metal-shadow),
     0 30px 80px var(--shadow-strong);
-  overflow: hidden;
-  isolation: isolate;
-  color: var(--accent);
-}
-/* Subtle inner well */
-.engine__bay::before {
-  content: '';
-  position: absolute;
-  inset: 14px;
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--bg) 96%, transparent),
-      color-mix(in srgb, var(--bg-soft) 80%, transparent));
-  pointer-events: none;
-  z-index: 0;
 }
 
-.engine__logic,
-.engine__wires {
+/* Brushed-metal striations — extremely subtle horizontal grain. */
+.engine__grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    0deg,
+    color-mix(in srgb, var(--text) 4%, transparent) 0px,
+    color-mix(in srgb, var(--text) 4%, transparent) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  opacity: 0.35;
+  mix-blend-mode: overlay;
+}
+
+/* Specular sheen — slow drift across the plate. */
+.engine__sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  background: linear-gradient(
+    115deg,
+    transparent 0%,
+    transparent 42%,
+    color-mix(in srgb, var(--accent-strong) 9%, transparent) 50%,
+    transparent 58%,
+    transparent 100%);
+  transform: translateX(-100%);
+  animation: engine-sheen 16s linear infinite;
+  mix-blend-mode: screen;
+}
+@keyframes engine-sheen {
+  0%   { transform: translateX(-100%); }
+  65%  { transform: translateX(100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Abstract logic fragments — interrupted horizontal data bands.
+   Never readable, never a terminal. */
+.engine__logic {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
-}
-.engine__logic { opacity: 0.5; mix-blend-mode: screen; }
-
-.engine__wire {
-  stroke: var(--line-strong);
-  stroke-width: 1;
-  fill: none;
-}
-.engine__pulse {
-  stroke: var(--accent);
-  stroke-width: 1.5;
-  fill: none;
-  stroke-linecap: round;
-  stroke-dasharray: 90 770;
-  stroke-dashoffset: 860;
-  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--accent) 65%, transparent));
-  animation: engine-pulse 4.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-.engine__pulse--web  { animation-delay: 0s; }
-.engine__pulse--ai   { animation-delay: 1.2s; }
-.engine__pulse--auto { animation-delay: 2.4s; }
-@keyframes engine-pulse {
-  0%   { stroke-dashoffset: 860; opacity: 0; }
-  10%  { opacity: 1; }
-  70%  { opacity: 1; }
-  100% { stroke-dashoffset: 0; opacity: 0; }
-}
-
-/* Modules positioned in % over the bay's 1200x360 viewBox */
-.engine__module {
-  position: absolute;
-  z-index: 2;
-  left: 4%;
-  width: 13%;
-  min-width: 92px;
-  height: 14%;
-  min-height: 36px;
-  display: grid;
-  place-items: center;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: clamp(0.62rem, 0.9vw, 0.78rem);
-  letter-spacing: 0.22em;
-  color: var(--text);
-  background:
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--panel-strong) 100%, transparent),
-      color-mix(in srgb, var(--panel) 80%, transparent));
-  border: 1px solid var(--line-strong);
-  border-radius: 10px;
-  box-shadow:
-    inset 0 1px 0 var(--metal-highlight),
-    inset 0 -1px 0 var(--metal-shadow),
-    0 4px 14px color-mix(in srgb, var(--shadow) 70%, transparent);
-}
-.engine__module--web  { top: 13%; }
-.engine__module--ai   { top: 43%; }
-.engine__module--auto { top: 73%; width: 16%; }
-
-/* SYSTEM plate — right side, brighter, slight inner ice-blue glow */
-.engine__system {
-  position: absolute;
-  z-index: 2;
-  right: 4%;
-  top: 28%;
-  width: 18%;
-  min-width: 124px;
-  height: 44%;
-  min-height: 80px;
-  display: grid;
-  place-items: center;
-  border-radius: 14px;
-  background:
-    radial-gradient(120% 100% at 50% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 60%),
-    linear-gradient(180deg,
-      color-mix(in srgb, var(--panel-strong) 100%, transparent),
-      color-mix(in srgb, var(--panel) 70%, transparent));
-  border: 1px solid color-mix(in srgb, var(--accent) 38%, var(--line-strong));
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--accent) 24%, transparent),
-    inset 0 -1px 0 var(--metal-shadow),
-    0 10px 28px color-mix(in srgb, var(--accent) 14%, transparent),
-    0 6px 18px var(--shadow);
-}
-.engine__system-label {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: clamp(0.74rem, 1vw, 0.92rem);
-  letter-spacing: 0.3em;
-  font-weight: 700;
-  color: var(--text);
-  text-shadow: 0 0 18px color-mix(in srgb, var(--accent) 30%, transparent);
-}
-.engine__system-core {
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  filter: blur(1px);
-  opacity: 0.85;
-  animation: engine-core-glow 3.6s ease-in-out infinite;
-}
-@keyframes engine-core-glow {
-  0%, 100% { opacity: 0.55; }
-  50%      { opacity: 1; }
-}
-
-/* Cinematic scan reflection — slow diagonal sweep */
-.engine__scan {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  pointer-events: none;
-  background: linear-gradient(
-    115deg,
-    transparent 0%,
-    transparent 40%,
-    color-mix(in srgb, var(--accent-strong) 14%, transparent) 50%,
-    transparent 60%,
-    transparent 100%);
-  transform: translateX(-100%);
-  animation: engine-scan 14s linear infinite;
+  opacity: 0.32;
   mix-blend-mode: screen;
 }
-@keyframes engine-scan {
-  0%   { transform: translateX(-100%); }
-  60%  { transform: translateX(100%); }
-  100% { transform: translateX(100%); }
+
+/* Horizontal energy rail across the center. */
+.engine__rail {
+  position: absolute;
+  inset: 50% 8% auto 8%;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--line-strong) 12%,
+    color-mix(in srgb, var(--accent) 75%, transparent) 50%,
+    var(--line-strong) 88%,
+    transparent 100%);
+  transform: translateY(-0.5px);
+  overflow: visible;
+  z-index: 1;
+}
+.engine__rail-pulse {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16%;
+  height: 1px;
+  transform: translateY(-50%);
+  background: linear-gradient(90deg,
+    transparent,
+    color-mix(in srgb, var(--accent-strong) 80%, transparent),
+    transparent);
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent) 70%, transparent));
+  animation: engine-rail-pulse 7s ease-in-out infinite;
+}
+@keyframes engine-rail-pulse {
+  0%   { left: -16%; opacity: 0; }
+  10%  { opacity: 1; }
+  85%  { opacity: 1; }
+  100% { left: 100%;  opacity: 0; }
+}
+
+/* Stage: kinetic typography. All words share the same anchor position;
+   they cross-fade through the loop and resolve to SYSTEM, then SHAKUR seal. */
+.engine__stage {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+}
+.engine__word,
+.engine__seal {
+  position: absolute;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  text-align: center;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  opacity: 0;
+  will-change: opacity, transform, filter;
+}
+
+.engine__word {
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: clamp(2rem, 6vw, 4.6rem);
+  line-height: 1;
+  text-shadow: 0 0 28px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+.engine__word--web,
+.engine__word--ai,
+.engine__word--auto {
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--text) 90%, var(--accent) 10%);
+}
+.engine__word--system {
+  font-size: clamp(2.8rem, 8vw, 6.4rem);
+  letter-spacing: -0.025em;
+  font-weight: 800;
+  background: linear-gradient(180deg,
+    var(--text) 0%,
+    var(--accent-strong) 60%,
+    color-mix(in srgb, var(--accent) 80%, var(--text) 20%) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 6px 32px color-mix(in srgb, var(--accent) 30%, transparent));
+}
+
+/* SHAKUR · STUDIO seal — small, restrained, the final state. */
+.engine__seal {
+  bottom: 14%;
+  top: auto;
+  font-size: clamp(0.72rem, 1.05vw, 0.92rem);
+  letter-spacing: 0.36em;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+/* === Animation timeline ===
+   Total cycle: 16 s. Four words in succession, then SYSTEM holds,
+   then SHAKUR seal appears as the final still.
+
+       0   ──  WEB    fade in  (0-3%)
+       4%  ──  WEB    hold
+       19% ──  WEB    fade out (19-22%)
+       25% ──  AI     fade in
+       43% ──  AI     fade out
+       46% ──  AUTO   fade in
+       63% ──  AUTO   fade out
+       66% ──  SYSTEM rises in (slow up-blur reveal)
+       95% ──  SYSTEM dissolves
+       80% ──  SEAL   appears beneath the SYSTEM
+      100% ──  loop                                                          */
+.engine__word--web,
+.engine__word--ai,
+.engine__word--auto,
+.engine__word--system,
+.engine__seal {
+  animation-duration: 16s;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
+.engine__word--web    { animation-name: engine-word-web; }
+.engine__word--ai     { animation-name: engine-word-ai; }
+.engine__word--auto   { animation-name: engine-word-auto; }
+.engine__word--system { animation-name: engine-word-system; }
+.engine__seal         { animation-name: engine-seal; }
+
+@keyframes engine-word-web {
+  0%, 4%   { opacity: 0; transform: translateY(-50%) translateY(8px); filter: blur(4px); }
+  8%, 18%  { opacity: 1; transform: translateY(-50%) translateY(0);   filter: blur(0); }
+  23%      { opacity: 0; transform: translateY(-50%) translateY(-6px); filter: blur(2px); }
+  100%     { opacity: 0; }
+}
+@keyframes engine-word-ai {
+  0%, 24%  { opacity: 0; transform: translateY(-50%) translateY(8px); filter: blur(4px); }
+  28%, 38% { opacity: 1; transform: translateY(-50%) translateY(0);   filter: blur(0); }
+  44%      { opacity: 0; transform: translateY(-50%) translateY(-6px); filter: blur(2px); }
+  100%     { opacity: 0; }
+}
+@keyframes engine-word-auto {
+  0%, 46%  { opacity: 0; transform: translateY(-50%) translateY(8px); filter: blur(4px); }
+  50%, 60% { opacity: 1; transform: translateY(-50%) translateY(0);   filter: blur(0); }
+  66%      { opacity: 0; transform: translateY(-50%) translateY(-6px); filter: blur(2px); }
+  100%     { opacity: 0; }
+}
+@keyframes engine-word-system {
+  0%, 65%  { opacity: 0; transform: translateY(-50%) scale(0.96); filter: blur(8px); }
+  74%      { opacity: 1; transform: translateY(-50%) scale(1);    filter: blur(0); }
+  92%      { opacity: 1; transform: translateY(-50%) scale(1);    filter: blur(0); }
+  100%     { opacity: 0; transform: translateY(-50%) scale(0.98); filter: blur(2px); }
+}
+@keyframes engine-seal {
+  0%, 78%  { opacity: 0; transform: translateY(4px); }
+  86%, 96% { opacity: 1; transform: translateY(0); }
+  100%     { opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .engine__pulse { animation: none !important; stroke-dashoffset: 0; opacity: 0.5; }
-  .engine__scan { animation: none !important; opacity: 0; }
-  .engine__system-core { animation: none !important; opacity: 0.7; }
+  .engine__sheen      { animation: none !important; opacity: 0; }
+  .engine__rail-pulse { animation: none !important; opacity: 0; }
+  .engine__word--web,
+  .engine__word--ai,
+  .engine__word--auto { animation: none !important; opacity: 0; }
+  .engine__word--system {
+    animation: none !important;
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+    filter: none;
+  }
+  .engine__seal {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* ============================================================
@@ -1362,9 +1451,8 @@ main { max-width: 1180px; margin: 0 auto; }
     padding: 56px 0 32px;
     gap: 28px;
   }
-  .engine__bay { aspect-ratio: 4 / 3; }
-  .engine__module { font-size: 0.62rem; }
-  .engine__module--auto { width: 22%; }
+  .engine__plate { aspect-ratio: 5 / 4; }
+  .engine__rail { inset: 50% 6% auto 6%; }
   .caps-contact__list { grid-template-columns: 1fr; gap: 18px; }
   .caps-contact { gap: 40px; }
   .site-footer { flex-direction: column; align-items: flex-start; }
