@@ -10,23 +10,40 @@ interface HeaderProps {
   onThemeToggle: () => void;
 }
 
+interface NavItem {
+  href: string;
+  ordinal: string;
+  labelKey: Parameters<typeof translate>[1];
+}
+
+const NAV: NavItem[] = [
+  { href: '#agents', ordinal: '01', labelKey: 'nav.agents' },
+  { href: '#method', ordinal: '02', labelKey: 'nav.method' },
+  { href: '#contact', ordinal: '03', labelKey: 'nav.contact' }
+];
+
 export function Header({ language, theme, onLanguageChange, onThemeToggle }: HeaderProps) {
   const t = (key: Parameters<typeof translate>[1]) => translate(language, key);
 
   return (
     <header className="site-header">
       <a className="brand" href="#top" aria-label={t('a11y.brand')}>
-        <strong>SHAKUR</strong><span>STUDIO</span>
+        <span className="brand__mark">SHAKUR</span>
+        <span className="brand__suffix">_</span>
       </a>
+
       <nav className="desktop-nav" aria-label={t('a11y.nav')}>
-        <a href="#agents">{t('nav.agents')}</a>
-        <a href="#method">{t('nav.method')}</a>
-        <a href="#contact">{t('nav.contact')}</a>
+        {NAV.map((item) => (
+          <a key={item.href} href={item.href} className="desktop-nav__link">
+            <span className="desktop-nav__ordinal" aria-hidden="true">{item.ordinal}</span>
+            <span className="desktop-nav__label">// {t(item.labelKey)}</span>
+          </a>
+        ))}
       </nav>
+
       <div className="header-actions">
         <LanguageSwitcher language={language} onChange={onLanguageChange} />
         <ThemeToggle theme={theme} onToggle={onThemeToggle} />
-        <a className="button button--small button--primary" href="#contact">{t('cta.startProject')}</a>
       </div>
     </header>
   );
