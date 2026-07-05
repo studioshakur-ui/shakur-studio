@@ -270,7 +270,7 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat, se
       {/* Input panel */}
       <div className="chat-input-panel-warm">
         <form onSubmit={handleSubmit} className="chat-input-form-warm">
-          <div className="chat-input-wrapper-warm">
+          <div className={`chat-input-wrapper-warm ${isStreaming ? 'is-loading-warm' : ''}`}>
             <textarea
               ref={textareaRef}
               rows={1}

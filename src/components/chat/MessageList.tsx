@@ -186,12 +186,14 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
 
   return (
     <div className="message-list-warm">
-      {messages.map((msg) => {
+      {messages.map((msg, index) => {
         const isUser = msg.role === 'user';
+        const isLast = index === messages.length - 1;
+        const isGenerating = isLast && isStreaming;
         return (
           <div
             key={msg.id}
-            className={`message-bubble-warm ${isUser ? 'message-bubble-warm--user' : 'message-bubble-warm--assistant'}`}
+            className={`message-bubble-warm ${isUser ? 'message-bubble-warm--user' : 'message-bubble-warm--assistant'} ${isGenerating ? 'is-generating-warm' : ''}`}
           >
             <div className="message-payload-warm">
               <div className="message-header-warm">
@@ -203,15 +205,21 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
                 </span>
               </div>
               <div className="message-body-warm">
-                {renderMessageContent(msg.content)}
+                {msg.content ? renderMessageContent(msg.content) : (
+                  <div className="typing-indicator-warm">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         );
       })}
       
-      {isStreaming && (
-        <div className="message-bubble-warm message-bubble-warm--assistant is-typing-warm">
+      {isStreaming && (messages.length === 0 || messages[messages.length - 1].role !== 'assistant') && (
+        <div className="message-bubble-warm message-bubble-warm--assistant is-typing-warm is-generating-warm">
           <div className="message-payload-warm">
             <div className="message-body-warm">
               <div className="typing-indicator-warm">
