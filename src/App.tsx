@@ -8,9 +8,11 @@ import { DocumentsPage } from './components/pages/DocumentsPage';
 import { MemoryPage } from './components/pages/MemoryPage';
 import { WorkspacePage } from './components/pages/WorkspacePage';
 import { SettingsPage } from './components/pages/SettingsPage';
+import { ProfilePage } from './components/pages/ProfilePage';
 import { AuthGate } from './features/auth/AuthGate';
 import { useHashRoute } from './lib/router';
 import { Conversation } from './lib/shakurOS';
+import { Session } from '@supabase/supabase-js';
 
 type Theme = 'dark' | 'light';
 
@@ -38,7 +40,7 @@ export default function App() {
   }, [theme]);
 
   // Render current view depending on route path
-  const renderContent = () => {
+  const renderContent = (session: Session | null) => {
     switch (currentPath) {
       case '/':
         return (
@@ -47,6 +49,7 @@ export default function App() {
             navigate={navigate}
             activeChat={activeChatToLoad}
             onResetActiveChat={() => setActiveChatToLoad(null)}
+            session={session}
           />
         );
       case '/history':
@@ -64,7 +67,9 @@ export default function App() {
       case '/workspace':
         return <WorkspacePage language={language} />;
       case '/settings':
-        return <SettingsPage language={language} />;
+        return <SettingsPage language={language} session={session} />;
+      case '/profile':
+        return <ProfilePage language={language} session={session} />;
       default:
         return (
           <ChatPage
@@ -72,6 +77,7 @@ export default function App() {
             navigate={navigate}
             activeChat={activeChatToLoad}
             onResetActiveChat={() => setActiveChatToLoad(null)}
+            session={session}
           />
         );
     }
@@ -79,7 +85,7 @@ export default function App() {
 
   return (
     <AuthGate>
-      {() => (
+      {(session) => (
         <Layout
           currentPath={currentPath}
           navigate={navigate}
@@ -87,8 +93,9 @@ export default function App() {
           onLanguageChange={setLanguage}
           theme={theme}
           onThemeToggle={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}
+          session={session}
         >
-          {renderContent()}
+          {renderContent(session)}
         </Layout>
       )}
     </AuthGate>

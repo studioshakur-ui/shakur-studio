@@ -91,7 +91,26 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isStreaming]);
 
+  const isDebugMessage = (content: string) => {
+    return content.trim().startsWith('ShakurOS a traite la demande via');
+  };
+
   const renderMessageContent = (content: string) => {
+    if (isDebugMessage(content)) {
+      return (
+        <div className="shakuros-routing-details-warm">
+          <details className="routing-details-toggle">
+            <summary className="routing-details-summary">
+              <span>Routage technique ShakurOS</span>
+            </summary>
+            <div className="routing-details-content">
+              <p>{parseInlineMarkdown(content)}</p>
+            </div>
+          </details>
+        </div>
+      );
+    }
+
     const thinkingMatch = content.match(/\[Chaîne de Pensée - Raisonnement DeepSeek-R1\]\n([\s\S]*?)\n\n/);
     let mainContent = content;
     let thinkingBlock = '';
@@ -175,7 +194,10 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
             className={`message-bubble-warm ${isUser ? 'message-bubble-warm--user' : 'message-bubble-warm--assistant'}`}
           >
             <div className="message-payload-warm">
-              <div className="message-header-warm" aria-hidden="true">
+              <div className="message-header-warm">
+                <span className="message-sender-label-warm">
+                  {isUser ? 'Vous' : 'PETAW'}
+                </span>
                 <span className="message-time-warm">
                   {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>

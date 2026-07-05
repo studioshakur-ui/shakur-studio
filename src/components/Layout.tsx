@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
-import { Menu, X, Globe, Moon, Sun, MessageCircle, Clock3, FileText, Database, PanelsTopLeft, Settings } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Menu, X, Globe, Moon, Sun, MessageCircle, Clock3, FileText, Database, PanelsTopLeft, Settings, LogOut, User } from 'lucide-react';
 import { RoutePath } from '../lib/router';
 import { Language } from '../i18n/translations';
 import { translate } from '../i18n/config';
+import { supabase } from '../lib/supabaseClient';
+import { Session } from '@supabase/supabase-js';
+import { userUnderstandingService, UserContext } from '../lib/userUnderstandingService';
 
 interface LayoutProps {
   currentPath: RoutePath;
@@ -12,6 +15,7 @@ interface LayoutProps {
   theme: 'dark' | 'light';
   onThemeToggle: () => void;
   children: React.ReactNode;
+  session: Session | null;
 }
 
 export function Layout({
@@ -21,11 +25,55 @@ export function Layout({
   onLanguageChange,
   theme,
   onThemeToggle,
-  children
+  children,
+  session
 }: LayoutProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [userContext, setUserContext] = useState<UserContext | null>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const t = (key: Parameters<typeof translate>[1]) => translate(language, key);
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      userUnderstandingService.getUserContext(session.user.id).then((context) => {
+        setUserContext(context);
+      });
+    } else {
+      setUserContext(userUnderstandingService.getLocalFallback());
+    }
+  }, [session]);
+
+  useEffect(() => {
+    const handleProfileUpdate = () => {
+      if (session?.user?.id) {
+        userUnderstandingService.getUserContext(session.user.id).then((context) => {
+          setUserContext(context);
+        });
+      }
+    };
+    window.addEventListener('petaw_profile_updated', handleProfileUpdate);
+    return () => window.removeEventListener('petaw_profile_updated', handleProfileUpdate);
+  }, [session]);
+
+  const completeness = userContext ? userUnderstandingService.calculateCompleteness(userContext, session?.user?.email || '') : 0;
+
+  const getInitials = () => {
+    if (userContext?.firstName && userContext?.lastName) {
+      return (userContext.firstName[0] + userContext.lastName[0]).toUpperCase();
+    }
+    if (userContext?.firstName) return userContext.firstName.substring(0, 2).toUpperCase();
+    if (session?.user?.email) return session.user.email.substring(0, 2).toUpperCase();
+    return 'HM';
+  };
+
+  const getFullName = () => {
+    if (userContext?.firstName && userContext?.lastName) {
+      return `${userContext.firstName} ${userContext.lastName}`;
+    }
+    if (userContext?.firstName) return userContext.firstName;
+    return session?.user?.email?.split('@')[0] || 'Hamidou Maiga';
+  };
 
   const navItems = [
     { path: '/' as RoutePath, label: t('nav.chat'), icon: MessageCircle },
@@ -47,7 +95,6 @@ export function Layout({
       <aside className="petaw-sidebar">
         <div className="petaw-sidebar__brand" onClick={() => handleNavClick('/')}>
           <span className="brand-name">PETAW</span>
-          <span className="brand-cursor">_</span>
         </div>
 
         <nav className="petaw-sidebar__nav">
@@ -90,6 +137,51 @@ export function Layout({
               <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
             </button>
           </div>
+
+          {session && (
+            <div className="sidebar-profile-widget-container-warm">
+              {isMenuOpen && (
+                <div className="profile-dropdown-menu-warm">
+                  <button onClick={() => { handleNavClick('/profile'); setIsMenuOpen(false); }} className="dropdown-item-btn-warm">
+                    {language === 'fr' ? 'Profil' : 'Profile'}
+                  </button>
+                  <button onClick={() => { handleNavClick('/settings'); setIsMenuOpen(false); }} className="dropdown-item-btn-warm">
+                    {language === 'fr' ? 'Préférences API' : 'API Preferences'}
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (supabase) {
+                        await supabase.auth.signOut();
+                      }
+                      setIsMenuOpen(false);
+                    }}
+                    className="dropdown-item-btn-warm logout"
+                  >
+                    <LogOut size={12} />
+                    <span>{language === 'fr' ? 'Déconnexion' : 'Sign Out'}</span>
+                  </button>
+                </div>
+              )}
+
+              <div 
+                className="sidebar-profile-widget-warm" 
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                role="button"
+                aria-haspopup="true"
+                aria-expanded={isMenuOpen}
+              >
+                <div className="profile-widget-avatar-warm">
+                  {getInitials()}
+                </div>
+                <div className="profile-widget-info-warm">
+                  <span className="profile-widget-name-warm">{getFullName()}</span>
+                  <span className="profile-widget-completeness-warm">
+                    {language === 'fr' ? `Profil ${completeness}% complété` : `Profile ${completeness}% completed`}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </aside>
 
@@ -97,7 +189,6 @@ export function Layout({
       <header className="petaw-mobile-header">
         <div className="petaw-mobile-header__brand" onClick={() => handleNavClick('/')}>
           <span className="brand-name">PETAW</span>
-          <span className="brand-cursor">_</span>
         </div>
         <button
           className="petaw-mobile-header__toggle"
@@ -140,6 +231,29 @@ export function Layout({
               {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
               <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
             </button>
+            <button
+              onClick={() => handleNavClick('/profile')}
+              className="footer-control-btn"
+              style={{ gap: '8px' }}
+            >
+              <User size={15} />
+              <span>{language === 'fr' ? 'Mon Profil' : 'My Profile'}</span>
+            </button>
+            {supabase && (
+              <button
+                onClick={async () => {
+                  if (supabase) {
+                    await supabase.auth.signOut();
+                  }
+                  setIsMobileMenuOpen(false);
+                }}
+                className="footer-control-btn"
+                style={{ gap: '8px' }}
+              >
+                <LogOut size={15} />
+                <span>{language === 'fr' ? 'Déconnexion' : 'Sign Out'}</span>
+              </button>
+            )}
           </div>
         </div>
       )}

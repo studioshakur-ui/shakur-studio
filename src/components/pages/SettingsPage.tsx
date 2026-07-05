@@ -1,18 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Save } from 'lucide-react';
 import { ShakurOS, UserProfile } from '../../lib/shakurOS';
 import { providers } from '../../lib/modelRouter';
 import { translate } from '../../i18n/config';
 import { Language } from '../../i18n/translations';
+import { Session } from '@supabase/supabase-js';
+import { userUnderstandingService } from '../../lib/userUnderstandingService';
 
 interface SettingsPageProps {
   language: Language;
+  session: Session | null;
 }
 
-export function SettingsPage({ language }: SettingsPageProps) {
+export function SettingsPage({ language, session }: SettingsPageProps) {
   const [profile, setProfile] = useState<UserProfile>(() => ShakurOS.getProfile());
   const [apiKeys, setApiKeys] = useState<Record<string, string>>(() => ShakurOS.getApiKeys());
   const [showSavedMsg, setShowSavedMsg] = useState(false);
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      userUnderstandingService.getUserContext(session.user.id).then((context) => {
+        if (context.firstName) {
+          setProfile(prev => ({
+            ...prev,
+            name: context.firstName
+          }));
+        }
+      });
+    }
+  }, [session]);
 
   const t = (key: Parameters<typeof translate>[1]) => translate(language, key);
 
@@ -30,16 +46,23 @@ export function SettingsPage({ language }: SettingsPageProps) {
     }));
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     ShakurOS.saveProfile(profile);
     ShakurOS.saveApiKeys(apiKeys);
     
+    if (session?.user?.id) {
+      await userUnderstandingService.updateUserContext(session.user.id, {
+        firstName: profile.name
+      });
+    }
+
     setShowSavedMsg(true);
     setTimeout(() => {
       setShowSavedMsg(false);
     }, 2500);
   };
+
 
   const selectedProviderObj = providers.find(p => p.id === profile.defaultProviderId);
   const availableModels = selectedProviderObj ? selectedProviderObj.models : [];

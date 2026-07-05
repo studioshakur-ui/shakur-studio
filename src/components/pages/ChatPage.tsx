@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Globe, Trash2, StopCircle, RefreshCw } from 'lucide-react';
+import { Send, Globe, Trash2, StopCircle, RefreshCw, PenLine, FileText, Scale, GraduationCap } from 'lucide-react';
 import { ModelSelector } from '../chat/ModelSelector';
 import { MessageList } from '../chat/MessageList';
 import { ShakurOS, Conversation } from '../../lib/shakurOS';
@@ -7,18 +7,22 @@ import { Message } from '../../lib/providers/providerTypes';
 import { RoutePath } from '../../lib/router';
 import { translate } from '../../i18n/config';
 import { Language } from '../../i18n/translations';
+import { Session } from '@supabase/supabase-js';
+import { userUnderstandingService, UserContext } from '../../lib/userUnderstandingService';
 
 interface ChatPageProps {
   language: Language;
   navigate: (to: RoutePath) => void;
   activeChat: Conversation | null;
   onResetActiveChat: () => void;
+  session: Session | null;
 }
 
-export function ChatPage({ language, activeChat, onResetActiveChat }: ChatPageProps) {
+export function ChatPage({ language, navigate, activeChat, onResetActiveChat, session }: ChatPageProps) {
   const [profile, setProfile] = useState(() => ShakurOS.getProfile());
   const [providerId, setProviderId] = useState(profile.defaultProviderId);
   const [modelId, setModelId] = useState(profile.defaultModelId);
+  const [userContext, setUserContext] = useState<UserContext | null>(null);
   
   const [input, setInput] = useState('');
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
@@ -28,6 +32,23 @@ export function ChatPage({ language, activeChat, onResetActiveChat }: ChatPagePr
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   const t = (key: Parameters<typeof translate>[1]) => translate(language, key);
+
+  // Load user context profile on session changes
+  useEffect(() => {
+    if (session?.user?.id) {
+      userUnderstandingService.getUserContext(session.user.id).then((context) => {
+        setUserContext(context);
+        if (context.firstName) {
+          setProfile(prev => ({
+            ...prev,
+            name: context.firstName
+          }));
+        }
+      });
+    } else {
+      setUserContext(userUnderstandingService.getLocalFallback());
+    }
+  }, [session]);
 
   // Sync profile edits (like name change)
   useEffect(() => {
@@ -60,6 +81,26 @@ export function ChatPage({ language, activeChat, onResetActiveChat }: ChatPagePr
   const handleModelChange = (pId: string, mId: string) => {
     setProviderId(pId);
     setModelId(mId);
+  };
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    const isEvening = hour >= 18;
+    
+    let greet = 'Bonjour';
+    if (language === 'en') {
+      greet = 'Hello';
+    } else if (isEvening) {
+      greet = 'Bonsoir';
+    }
+
+    const nameToUse = userContext?.firstName || (profile.name !== 'Utilisateur' ? profile.name : '');
+    
+    if (nameToUse && nameToUse.trim()) {
+      return `${greet}, ${nameToUse.trim()}.`;
+    }
+    
+    return `${greet}.`;
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -179,6 +220,8 @@ export function ChatPage({ language, activeChat, onResetActiveChat }: ChatPagePr
   };
 
   const isChatEmpty = !currentChat || currentChat.messages.length === 0;
+  const completeness = userContext ? userUnderstandingService.calculateCompleteness(userContext, session?.user?.email || '') : 0;
+  const isProfileIncomplete = completeness < 100;
 
   return (
     <div className="chat-container-warm">
@@ -213,10 +256,10 @@ export function ChatPage({ language, activeChat, onResetActiveChat }: ChatPagePr
         {isChatEmpty ? (
           <div className="chat-greeting-view-warm">
             <h1 className="greeting-title-warm">
-              {language === 'fr' ? 'Bonjour' : 'Hello'} {profile.name}.
+              {getGreeting()}
             </h1>
             <p className="greeting-subtitle-warm">
-              {language === 'fr' ? 'On avance sur quoi maintenant ?' : 'What should we move forward now?'}
+              {language === 'fr' ? "Que souhaites-tu accomplir aujourd'hui ?" : "What do you wish to accomplish today?"}
             </p>
           </div>
         ) : (
@@ -234,7 +277,7 @@ export function ChatPage({ language, activeChat, onResetActiveChat }: ChatPagePr
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={t('chat.inputPlaceholder')}
+              placeholder={language === 'fr' ? "Pose ta question, écris, analyse..." : "Pose your question, write, analyze..."}
               className="chat-textarea-warm"
               disabled={isStreaming}
             />
@@ -279,6 +322,98 @@ export function ChatPage({ language, activeChat, onResetActiveChat }: ChatPagePr
               </div>
             </div>
           </div>
+
+          {input.trim() === '' && isChatEmpty && (
+            <div className="suggestions-container-warm">
+              <div className="input-suggestions-grid-warm">
+                <button
+                  type="button"
+                  onClick={() => setInput(language === 'fr' ? 'Écrire un texte' : 'Write a text')}
+                  className="suggestion-card-warm"
+                >
+                  <div className="suggestion-card-icon-warm">
+                    <PenLine size={20} />
+                  </div>
+                  <div className="suggestion-card-content-warm">
+                    <span className="suggestion-card-title-warm">
+                      {language === 'fr' ? 'Écrire un texte' : 'Write a text'}
+                    </span>
+                    <span className="suggestion-card-desc-warm">
+                      {language === 'fr' ? 'Rédiger, reformuler, structurer.' : 'Write, rephrase, structure.'}
+                    </span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setInput(language === 'fr' ? 'Analyser un document' : 'Analyze a document')}
+                  className="suggestion-card-warm"
+                >
+                  <div className="suggestion-card-icon-warm">
+                    <FileText size={20} />
+                  </div>
+                  <div className="suggestion-card-content-warm">
+                    <span className="suggestion-card-title-warm">
+                      {language === 'fr' ? 'Analyser un document' : 'Analyze a document'}
+                    </span>
+                    <span className="suggestion-card-desc-warm">
+                      {language === 'fr' ? 'Comprendre, résumer, extraire.' : 'Understand, summarize, extract.'}
+                    </span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setInput(language === 'fr' ? 'Préparer une décision' : 'Prepare a decision')}
+                  className="suggestion-card-warm"
+                >
+                  <div className="suggestion-card-icon-warm">
+                    <Scale size={20} />
+                  </div>
+                  <div className="suggestion-card-content-warm">
+                    <span className="suggestion-card-title-warm">
+                      {language === 'fr' ? 'Préparer une décision' : 'Prepare a decision'}
+                    </span>
+                    <span className="suggestion-card-desc-warm">
+                      {language === 'fr' ? 'Comparer, évaluer, recommander.' : 'Compare, evaluate, recommend.'}
+                    </span>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setInput(language === 'fr' ? 'Apprendre quelque chose' : 'Learn something')}
+                  className="suggestion-card-warm"
+                >
+                  <div className="suggestion-card-icon-warm">
+                    <GraduationCap size={20} />
+                  </div>
+                  <div className="suggestion-card-content-warm">
+                    <span className="suggestion-card-title-warm">
+                      {language === 'fr' ? 'Apprendre quelque chose' : 'Learn something'}
+                    </span>
+                    <span className="suggestion-card-desc-warm">
+                      {language === 'fr' ? 'Expliquer, enseigner, comprendre.' : 'Explain, teach, understand.'}
+                    </span>
+                  </div>
+                </button>
+              </div>
+
+              {/* Profile incompleteness warning banner placed under suggestions */}
+              {session && isProfileIncomplete && (
+                <div className="profile-warning-banner-warm">
+                  <span>{language === 'fr' ? 'Pour mieux vous connaître, complétez votre profil.' : 'To know you better, complete your profile.'}</span>
+                  <button 
+                    type="button" 
+                    onClick={() => navigate('/profile')} 
+                    className="banner-action-btn-warm"
+                  >
+                    {language === 'fr' ? 'Compléter mon profil' : 'Complete my profile'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </form>
       </div>
     </div>
