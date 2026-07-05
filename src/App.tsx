@@ -1,15 +1,20 @@
-import { useEffect, useMemo, useState } from 'react';
-import { getStoredLanguage, translate } from './i18n/config';
-import { Language, TranslationKey } from './i18n/translations';
-import { Header } from './components/Header';
-import { Hero } from './components/Hero';
-import { AgentsSection } from './components/AgentsSection';
-import { CapabilitiesContact } from './components/CapabilitiesContact';
+import { useEffect, useState } from 'react';
+import { getStoredLanguage } from './i18n/config';
+import { Language } from './i18n/translations';
+import { Layout } from './components/Layout';
+import { ChatPage } from './components/pages/ChatPage';
+import { HistoryPage } from './components/pages/HistoryPage';
+import { DocumentsPage } from './components/pages/DocumentsPage';
+import { MemoryPage } from './components/pages/MemoryPage';
+import { WorkspacePage } from './components/pages/WorkspacePage';
+import { SettingsPage } from './components/pages/SettingsPage';
+import { useHashRoute } from './lib/router';
+import { Conversation } from './lib/shakurOS';
 
 type Theme = 'dark' | 'light';
 
 function getStoredTheme(): Theme {
-  const stored = window.localStorage.getItem('shakur-theme');
+  const stored = window.localStorage.getItem('petaw-theme');
   if (stored === 'dark' || stored === 'light') return stored;
   return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
 }
@@ -17,39 +22,70 @@ function getStoredTheme(): Theme {
 export default function App() {
   const [language, setLanguage] = useState<Language>(() => getStoredLanguage());
   const [theme, setTheme] = useState<Theme>(() => getStoredTheme());
+  const [activeChatToLoad, setActiveChatToLoad] = useState<Conversation | null>(null);
+
+  const { currentPath, navigate } = useHashRoute();
 
   useEffect(() => {
-    window.localStorage.setItem('shakur-language', language);
+    window.localStorage.setItem('petaw-language', language);
     document.documentElement.lang = language;
   }, [language]);
 
   useEffect(() => {
-    window.localStorage.setItem('shakur-theme', theme);
+    window.localStorage.setItem('petaw-theme', theme);
     document.documentElement.dataset.theme = theme;
   }, [theme]);
 
-  const t = useMemo(() => (key: TranslationKey) => translate(language, key), [language]);
+  // Render current view depending on route path
+  const renderContent = () => {
+    switch (currentPath) {
+      case '/':
+        return (
+          <ChatPage
+            language={language}
+            navigate={navigate}
+            activeChat={activeChatToLoad}
+            onResetActiveChat={() => setActiveChatToLoad(null)}
+          />
+        );
+      case '/history':
+        return (
+          <HistoryPage
+            language={language}
+            navigate={navigate}
+            onLoadChat={(chat) => setActiveChatToLoad(chat)}
+          />
+        );
+      case '/documents':
+        return <DocumentsPage language={language} />;
+      case '/memory':
+        return <MemoryPage language={language} />;
+      case '/workspace':
+        return <WorkspacePage language={language} />;
+      case '/settings':
+        return <SettingsPage language={language} />;
+      default:
+        return (
+          <ChatPage
+            language={language}
+            navigate={navigate}
+            activeChat={activeChatToLoad}
+            onResetActiveChat={() => setActiveChatToLoad(null)}
+          />
+        );
+    }
+  };
 
   return (
-    <div className="app-shell">
-      <Header
-        language={language}
-        theme={theme}
-        onLanguageChange={setLanguage}
-        onThemeToggle={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}
-      />
-      <main>
-        <Hero language={language} />
-        <AgentsSection language={language} />
-        <CapabilitiesContact language={language} />
-      </main>
-      <footer className="site-footer">
-        <div className="site-footer__brand">
-          <strong>SHAKUR STUDIO</strong>
-          <span>{t('footer.signature')}</span>
-        </div>
-        <p>{t('footer.tagline')}</p>
-      </footer>
-    </div>
+    <Layout
+      currentPath={currentPath}
+      navigate={navigate}
+      language={language}
+      onLanguageChange={setLanguage}
+      theme={theme}
+      onThemeToggle={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}
+    >
+      {renderContent()}
+    </Layout>
   );
 }

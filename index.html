@@ -1,40 +1,39 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="fr" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0c0d10" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#f1efe9" media="(prefers-color-scheme: light)" />
-    <meta name="description" content="SHAKUR STUDIO — AI · Web · Automation. Premium digital systems built for clarity, conversion and execution. Live agents in FR / IT / EN." />
+    <meta name="theme-color" content="#07080b" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f6f7f9" media="(prefers-color-scheme: light)" />
+    <meta name="description" content="PETAW — Assistant d’Intelligence Artificielle généraliste multi-modèles conçu pour les utilisateurs africains et francophones." />
     <meta name="color-scheme" content="dark light" />
 
-    <meta property="og:title" content="SHAKUR STUDIO — AI · Web · Automation" />
-    <meta property="og:description" content="Premium AI, Web and Automation studio. Live agents that turn ideas, sites and workflows into operational systems." />
+    <meta property="og:title" content="PETAW — Assistant IA Multi-Modèles" />
+    <meta property="og:description" content="Assistant IA premium et silencieux intégrant les meilleurs modèles du marché (OpenAI, Anthropic, Gemini, DeepSeek, Groq, Ollama) pour le public francophone et africain." />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="SHAKUR STUDIO" />
-    <meta property="og:locale" content="en_US" />
-    <meta property="og:locale:alternate" content="fr_FR" />
-    <meta property="og:locale:alternate" content="it_IT" />
+    <meta property="og:site_name" content="PETAW" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:locale:alternate" content="en_US" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="SHAKUR STUDIO — AI · Web · Automation" />
-    <meta name="twitter:description" content="Premium AI, Web and Automation studio. Live agents that turn ideas, sites and workflows into operational systems." />
+    <meta name="twitter:title" content="PETAW — Assistant IA Multi-Modèles" />
+    <meta name="twitter:description" content="Assistant IA premium, silencieux et mobile-first, conçu pour les utilisateurs africains et francophones." />
 
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%2316181d'/%3E%3Cstop offset='100%25' stop-color='%230a0b0e'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='7' fill='url(%23g)' stroke='%234dd4b8' stroke-opacity='0.35'/%3E%3Cpath d='M20 11.4c-1.4-1.2-3-1.7-4.6-1.7-3.3 0-4.8 1.7-4.8 3.5 0 5.1 10.4 2.9 10.4 7.9 0 2.1-1.9 4.2-5.7 4.2-2 0-3.9-.7-5.3-1.9' fill='none' stroke='%234dd4b8' stroke-width='2.4' stroke-linecap='round'/%3E%3C/svg%3E" />
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23111318'/%3E%3Cstop offset='100%25' stop-color='%2307080b'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='7' fill='url(%23g)' stroke='%23a9d6ff' stroke-opacity='0.35'/%3E%3Ccircle cx='16' cy='16' r='6' fill='none' stroke='%23a9d6ff' stroke-width='2.4'/%3E%3C/svg%3E" />
 
-    <title>SHAKUR STUDIO — AI · Web · Automation</title>
+    <title>PETAW — Assistant IA Multi-Modèles</title>
 
     <script>
       (function () {
         try {
-          var lang = localStorage.getItem('shakur-language');
-          if (lang === 'fr' || lang === 'it' || lang === 'en') {
+          var lang = localStorage.getItem('petaw-language');
+          if (lang === 'fr' || lang === 'en') {
             document.documentElement.lang = lang;
           } else {
-            var nav = (navigator.language || 'en').toLowerCase();
-            document.documentElement.lang = nav.startsWith('it') ? 'it' : nav.startsWith('fr') ? 'fr' : 'en';
+            var nav = (navigator.language || 'fr').toLowerCase();
+            document.documentElement.lang = nav.startsWith('fr') ? 'fr' : 'en';
           }
-          var theme = localStorage.getItem('shakur-theme');
+          var theme = localStorage.getItem('petaw-theme');
           if (theme === 'dark' || theme === 'light') {
             document.documentElement.dataset.theme = theme;
           } else {
