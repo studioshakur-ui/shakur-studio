@@ -1,5 +1,4 @@
-import { ModelProvider, Message } from './providerTypes';
-import { getSimulatedResponse, simulateStream } from './helpers';
+import { ModelProvider } from './providerTypes';
 
 export const openaiProvider: ModelProvider = {
   id: 'openai',
@@ -23,14 +22,5 @@ export const openaiProvider: ModelProvider = {
       provider: 'openai',
       description: 'Modèle léger, ultra-rapide et optimisé pour le chat simple.'
     }
-  ],
-  generateResponse: async (
-    modelId: string,
-    messages: Message[],
-    webSearchEnabled: boolean,
-    onProgress: (chunk: string) => void
-  ): Promise<string> => {
-    const text = getSimulatedResponse('OpenAI', modelId, messages, webSearchEnabled);
-    return simulateStream(text, onProgress);
-  }
+  ]
 };

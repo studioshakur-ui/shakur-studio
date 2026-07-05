@@ -8,6 +8,7 @@ import { DocumentsPage } from './components/pages/DocumentsPage';
 import { MemoryPage } from './components/pages/MemoryPage';
 import { WorkspacePage } from './components/pages/WorkspacePage';
 import { SettingsPage } from './components/pages/SettingsPage';
+import { AuthGate } from './features/auth/AuthGate';
 import { useHashRoute } from './lib/router';
 import { Conversation } from './lib/shakurOS';
 
@@ -77,15 +78,19 @@ export default function App() {
   };
 
   return (
-    <Layout
-      currentPath={currentPath}
-      navigate={navigate}
-      language={language}
-      onLanguageChange={setLanguage}
-      theme={theme}
-      onThemeToggle={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}
-    >
-      {renderContent()}
-    </Layout>
+    <AuthGate>
+      {() => (
+        <Layout
+          currentPath={currentPath}
+          navigate={navigate}
+          language={language}
+          onLanguageChange={setLanguage}
+          theme={theme}
+          onThemeToggle={() => setTheme((current) => current === 'dark' ? 'light' : 'dark')}
+        >
+          {renderContent()}
+        </Layout>
+      )}
+    </AuthGate>
   );
 }

@@ -1,5 +1,4 @@
-import { ModelProvider, Message } from './providerTypes';
-import { getSimulatedResponse, simulateStream } from './helpers';
+import { ModelProvider } from './providerTypes';
 
 export const anthropicProvider: ModelProvider = {
   id: 'anthropic',
@@ -23,14 +22,5 @@ export const anthropicProvider: ModelProvider = {
       provider: 'anthropic',
       description: 'Raisonnement profond et contextualisé pour les tâches de recherche.'
     }
-  ],
-  generateResponse: async (
-    modelId: string,
-    messages: Message[],
-    webSearchEnabled: boolean,
-    onProgress: (chunk: string) => void
-  ): Promise<string> => {
-    const text = getSimulatedResponse('Anthropic', modelId, messages, webSearchEnabled);
-    return simulateStream(text, onProgress);
-  }
+  ]
 };

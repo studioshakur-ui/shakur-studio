@@ -5,6 +5,7 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_ANON_KEY?: string;
   readonly VITE_CONTACT_EMAIL?: string;
   readonly VITE_WHATSAPP_URL?: string;
+  readonly VITE_SHAKUROS_API_URL?: string;
 }
 
 interface ImportMeta {

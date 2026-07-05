@@ -1,5 +1,4 @@
-import { ModelProvider, Message } from './providerTypes';
-import { getSimulatedResponse, simulateStream } from './helpers';
+import { ModelProvider } from './providerTypes';
 
 export const groqProvider: ModelProvider = {
   id: 'groq',
@@ -23,14 +22,5 @@ export const groqProvider: ModelProvider = {
       provider: 'groq',
       description: 'Modèle léger optimisé par Google, idéal pour des retours instantanés.'
     }
-  ],
-  generateResponse: async (
-    modelId: string,
-    messages: Message[],
-    webSearchEnabled: boolean,
-    onProgress: (chunk: string) => void
-  ): Promise<string> => {
-    const text = getSimulatedResponse('Groq LPU', modelId, messages, webSearchEnabled);
-    return simulateStream(text, onProgress);
-  }
+  ]
 };

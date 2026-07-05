@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Globe, Trash2, StopCircle, RefreshCw } from 'lucide-react';
-import { QuickActions } from '../chat/QuickActions';
 import { ModelSelector } from '../chat/ModelSelector';
 import { MessageList } from '../chat/MessageList';
 import { ShakurOS, Conversation } from '../../lib/shakurOS';
@@ -16,7 +15,7 @@ interface ChatPageProps {
   onResetActiveChat: () => void;
 }
 
-export function ChatPage({ language, navigate, activeChat, onResetActiveChat }: ChatPageProps) {
+export function ChatPage({ language, activeChat, onResetActiveChat }: ChatPageProps) {
   const [profile, setProfile] = useState(() => ShakurOS.getProfile());
   const [providerId, setProviderId] = useState(profile.defaultProviderId);
   const [modelId, setModelId] = useState(profile.defaultModelId);
@@ -61,19 +60,6 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat }: 
   const handleModelChange = (pId: string, mId: string) => {
     setProviderId(pId);
     setModelId(mId);
-  };
-
-  const handleQuickAction = (actionKey: 'ask' | 'upload' | 'search' | 'continue') => {
-    if (actionKey === 'upload') {
-      navigate('/documents');
-    } else if (actionKey === 'continue') {
-      navigate('/history');
-    } else if (actionKey === 'search') {
-      setWebSearchEnabled(true);
-      textareaRef.current?.focus();
-    } else if (actionKey === 'ask') {
-      textareaRef.current?.focus();
-    }
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -198,13 +184,7 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat }: 
     <div className="chat-container-warm">
       {/* Header bar */}
       <div className="chat-header-bar-warm">
-        <div className="chat-header-left">
-          <ModelSelector
-            selectedProviderId={providerId}
-            selectedModelId={modelId}
-            onChange={handleModelChange}
-          />
-        </div>
+        <div className="chat-header-left" />
         <div className="chat-header-right">
           {!isChatEmpty && (
             <div className="chat-header-actions-warm">
@@ -229,15 +209,15 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat }: 
       </div>
 
       {/* Main chat viewport */}
-      <div className="chat-viewport-warm">
+      <div className={`chat-viewport-warm ${isChatEmpty ? 'is-empty' : 'has-messages'}`}>
         {isChatEmpty ? (
           <div className="chat-greeting-view-warm">
             <h1 className="greeting-title-warm">
               {language === 'fr' ? 'Bonjour' : 'Hello'} {profile.name}.
             </h1>
-            <p className="greeting-subtitle-warm">{t('chat.prompt')}</p>
-            
-            <QuickActions language={language} onSelectAction={handleQuickAction} />
+            <p className="greeting-subtitle-warm">
+              {language === 'fr' ? 'On avance sur quoi maintenant ?' : 'What should we move forward now?'}
+            </p>
           </div>
         ) : (
           <MessageList messages={currentChat.messages} isStreaming={isStreaming} />
@@ -270,6 +250,12 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat }: 
                 <span>{language === 'fr' ? 'Recherche Web' : 'Web Search'}</span>
               </button>
 
+              <ModelSelector
+                selectedProviderId={providerId}
+                selectedModelId={modelId}
+                onChange={handleModelChange}
+              />
+
               <div className="send-action-group-warm">
                 {isStreaming ? (
                   <button
@@ -294,9 +280,6 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat }: 
             </div>
           </div>
         </form>
-        <p className="chat-footer-disclaimer-warm">
-          PETAW AI
-        </p>
       </div>
     </div>
   );

@@ -1,5 +1,4 @@
-import { ModelProvider, Message } from './providerTypes';
-import { getSimulatedResponse, simulateStream } from './helpers';
+import { ModelProvider } from './providerTypes';
 
 export const geminiProvider: ModelProvider = {
   id: 'gemini',
@@ -23,14 +22,5 @@ export const geminiProvider: ModelProvider = {
       provider: 'gemini',
       description: 'Modèle léger et très économique pour des réponses instantanées.'
     }
-  ],
-  generateResponse: async (
-    modelId: string,
-    messages: Message[],
-    webSearchEnabled: boolean,
-    onProgress: (chunk: string) => void
-  ): Promise<string> => {
-    const text = getSimulatedResponse('Google Gemini', modelId, messages, webSearchEnabled);
-    return simulateStream(text, onProgress);
-  }
+  ]
 };

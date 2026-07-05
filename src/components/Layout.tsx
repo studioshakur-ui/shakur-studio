@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Menu, X, Globe, Moon, Sun } from 'lucide-react';
+import { Menu, X, Globe, Moon, Sun, MessageCircle, Clock3, FileText, Database, PanelsTopLeft, Settings } from 'lucide-react';
 import { RoutePath } from '../lib/router';
 import { Language } from '../i18n/translations';
 import { translate } from '../i18n/config';
@@ -28,12 +28,12 @@ export function Layout({
   const t = (key: Parameters<typeof translate>[1]) => translate(language, key);
 
   const navItems = [
-    { path: '/' as RoutePath, label: t('nav.chat') },
-    { path: '/history' as RoutePath, label: t('nav.history') },
-    { path: '/documents' as RoutePath, label: t('nav.documents') },
-    { path: '/memory' as RoutePath, label: t('nav.memory') },
-    { path: '/workspace' as RoutePath, label: t('nav.workspace') },
-    { path: '/settings' as RoutePath, label: t('nav.settings') }
+    { path: '/' as RoutePath, label: t('nav.chat'), icon: MessageCircle },
+    { path: '/history' as RoutePath, label: t('nav.history'), icon: Clock3 },
+    { path: '/documents' as RoutePath, label: t('nav.documents'), icon: FileText },
+    { path: '/memory' as RoutePath, label: t('nav.memory'), icon: Database },
+    { path: '/workspace' as RoutePath, label: t('nav.workspace'), icon: PanelsTopLeft },
+    { path: '/settings' as RoutePath, label: t('nav.settings'), icon: Settings }
   ];
 
   const handleNavClick = (path: RoutePath) => {
@@ -53,6 +53,7 @@ export function Layout({
         <nav className="petaw-sidebar__nav">
           {navItems.map((item) => {
             const isActive = currentPath === item.path;
+            const Icon = item.icon;
             return (
               <button
                 key={item.path}
@@ -60,6 +61,7 @@ export function Layout({
                 className={`petaw-sidebar__nav-item ${isActive ? 'active' : ''}`}
                 role="link"
               >
+                <Icon size={15} />
                 <span className="nav-label">{item.label}</span>
               </button>
             );
@@ -75,7 +77,7 @@ export function Layout({
               aria-label="Change language"
             >
               <Globe size={13} />
-              <span>{language === 'fr' ? 'EN' : 'FR'}</span>
+              <span>{language.toUpperCase()}</span>
             </button>
 
             <button
@@ -129,7 +131,7 @@ export function Layout({
               className="footer-control-btn"
             >
               <Globe size={15} />
-              <span>{language === 'fr' ? 'English' : 'Français'}</span>
+              <span>{language === 'fr' ? 'Français' : 'English'}</span>
             </button>
             <button
               onClick={onThemeToggle}

@@ -1,5 +1,5 @@
 import { Message } from './providers/providerTypes';
-import { routeAndGenerate, getModelById, DEFAULT_MODEL_ID } from './modelRouter';
+import { chatWithShakurOS } from './shakurosClient';
 
 export interface Conversation {
   id: string;
@@ -51,8 +51,8 @@ export class ShakurOS {
     }
     return {
       name: 'Utilisateur',
-      defaultProviderId: 'gemini',
-      defaultModelId: DEFAULT_MODEL_ID
+      defaultProviderId: 'auto',
+      defaultModelId: 'auto'
     };
   }
 
@@ -218,6 +218,6 @@ export class ShakurOS {
     webSearchEnabled: boolean,
     onProgress: (chunk: string) => void
   ): Promise<string> {
-    return routeAndGenerate(providerId, modelId, messages, webSearchEnabled, onProgress);
+    return chatWithShakurOS(providerId, modelId, messages, webSearchEnabled, onProgress);
   }
 }

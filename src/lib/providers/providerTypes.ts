@@ -16,10 +16,4 @@ export interface ModelProvider {
   id: string;
   name: string;
   models: ModelConfig[];
-  generateResponse: (
-    modelId: string,
-    messages: Message[],
-    webSearchEnabled: boolean,
-    onProgress: (chunk: string) => void
-  ) => Promise<string>;
 }

@@ -1,5 +1,4 @@
-import { ModelProvider, Message } from './providerTypes';
-import { getSimulatedResponse, simulateStream } from './helpers';
+import { ModelProvider } from './providerTypes';
 
 export const ollamaProvider: ModelProvider = {
   id: 'ollama',
@@ -23,14 +22,5 @@ export const ollamaProvider: ModelProvider = {
       provider: 'ollama',
       description: 'Petit modèle léger de Microsoft optimisé pour le CPU local.'
     }
-  ],
-  generateResponse: async (
-    modelId: string,
-    messages: Message[],
-    webSearchEnabled: boolean,
-    onProgress: (chunk: string) => void
-  ): Promise<string> => {
-    const text = getSimulatedResponse('Ollama (Local Host)', modelId, messages, webSearchEnabled);
-    return simulateStream(text, onProgress);
-  }
+  ]
 };

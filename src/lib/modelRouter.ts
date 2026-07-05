@@ -1,4 +1,4 @@
-import { ModelProvider, ModelConfig, Message } from './providers/providerTypes';
+import { ModelProvider, ModelConfig } from './providers/providerTypes';
 import { openaiProvider } from './providers/openai';
 import { anthropicProvider } from './providers/anthropic';
 import { geminiProvider } from './providers/gemini';
@@ -28,24 +28,3 @@ export function getModelById(modelId: string): ModelConfig | undefined {
 
 // Get the default model config (Gemini 2.5 Flash as standard fast multimodal scale)
 export const DEFAULT_MODEL_ID = 'gemini-2-5-flash';
-
-export async function routeAndGenerate(
-  providerId: string,
-  modelId: string,
-  messages: Message[],
-  webSearchEnabled: boolean,
-  onProgress: (chunk: string) => void
-): Promise<string> {
-  const provider = providers.find(p => p.id === providerId);
-  if (!provider) {
-    throw new Error(`Provider "${providerId}" not found.`);
-  }
-
-  // Ensure model exists inside the provider
-  const modelExists = provider.models.some(m => m.id === modelId);
-  if (!modelExists) {
-    throw new Error(`Model "${modelId}" is not supported by provider "${providerId}".`);
-  }
-
-  return provider.generateResponse(modelId, messages, webSearchEnabled, onProgress);
-}
