@@ -38,3 +38,5 @@ yarn-error.log*
 .codex/
 .agents/
 skills-lock.json
+
+.vercel
