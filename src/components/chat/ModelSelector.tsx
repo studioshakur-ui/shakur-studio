@@ -8,32 +8,26 @@ const MODES = [
   {
     providerId: 'auto',
     modelId: 'auto',
-    label: 'Auto',
-    description: 'ShakurOS choisit le meilleur équilibre entre qualité, vitesse et coût.'
+    label: 'Équilibré',
+    description: 'Choix optimal pour la rédaction et la discussion générale.'
   },
   {
     providerId: 'auto',
     modelId: 'fast',
     label: 'Rapide',
-    description: 'Priorité à la vitesse pour les demandes simples.'
-  },
-  {
-    providerId: 'auto',
-    modelId: 'economy',
-    label: 'Économique',
-    description: 'Priorité au coût bas avec fallback si nécessaire.'
+    description: 'Vitesse de réponse maximale pour les tâches rapides.'
   },
   {
     providerId: 'auto',
     modelId: 'premium',
-    label: 'Premium',
-    description: 'Priorité à la qualité pour les tâches importantes.'
+    label: 'Expert',
+    description: 'Modèles de pointe pour les raisonnements complexes et le code.'
   },
   {
     providerId: 'auto',
-    modelId: 'local',
-    label: 'Local',
-    description: 'Priorité aux modèles locaux quand ils sont disponibles.'
+    modelId: 'economy',
+    label: 'Créatif',
+    description: 'Optimisé pour les images et le style rédactionnel expressif.'
   }
 ];
 

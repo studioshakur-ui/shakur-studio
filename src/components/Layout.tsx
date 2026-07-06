@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Menu, X, Globe, Moon, Sun, MessageCircle, Clock3, FileText, Database, PanelsTopLeft, Settings, LogOut, User, PanelLeftClose, PanelLeftOpen, Shield, Gauge } from 'lucide-react';
 import { RoutePath } from '../lib/router';
 import { Language } from '../i18n/translations';
@@ -31,6 +31,7 @@ export function Layout({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userContext, setUserContext] = useState<UserContext | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => window.localStorage.getItem('petaw-sidebar-collapsed') === 'true');
   const [isAdminMode, setIsAdminMode] = useState<boolean>(() => window.localStorage.getItem('petaw-admin-mode') === 'true');
 
@@ -61,6 +62,21 @@ export function Layout({
   useEffect(() => {
     window.localStorage.setItem('petaw-sidebar-collapsed', String(isSidebarCollapsed));
   }, [isSidebarCollapsed]);
+
+  useEffect(() => {
+    if (!isMenuOpen) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMenuOpen]);
 
   useEffect(() => {
     window.localStorage.setItem('petaw-admin-mode', String(isAdminMode));
@@ -187,13 +203,13 @@ export function Layout({
           </div>
 
           {session && (
-            <div className="sidebar-profile-widget-container-warm">
+            <div className="sidebar-profile-widget-container-warm" ref={profileMenuRef}>
               {isMenuOpen && (
                 <div className="profile-dropdown-menu-warm">
                   <button onClick={() => { handleNavClick('/profile'); setIsMenuOpen(false); }} className="dropdown-item-btn-warm">
                     {language === 'fr' ? 'Profil' : 'Profile'}
                   </button>
-                  <button onClick={() => setIsAdminMode((current) => !current)} className="dropdown-item-btn-warm">
+                  <button onClick={() => { setIsAdminMode((current) => !current); setIsMenuOpen(false); }} className="dropdown-item-btn-warm">
                     <Shield size={12} />
                     <span>{isAdminMode ? (language === 'fr' ? 'Quitter le mode admin' : 'Exit admin mode') : (language === 'fr' ? 'Mode admin' : 'Admin mode')}</span>
                   </button>

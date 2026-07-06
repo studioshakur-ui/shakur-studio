@@ -9,6 +9,7 @@ import { MemoryPage } from './components/pages/MemoryPage';
 import { WorkspacePage } from './components/pages/WorkspacePage';
 import { SettingsPage } from './components/pages/SettingsPage';
 import { ProfilePage } from './components/pages/ProfilePage';
+import { AdminPage } from './components/pages/AdminPage';
 import { AuthGate } from './features/auth/AuthGate';
 import { useHashRoute } from './lib/router';
 import { Conversation } from './lib/shakurOS';
@@ -69,6 +70,8 @@ export default function App() {
         return <SettingsPage language={language} session={session} />;
       case '/profile':
         return <ProfilePage language={language} session={session} />;
+      case '/admin':
+        return <AdminPage language={language} />;
       default:
         return (
           <ChatPage

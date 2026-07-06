@@ -200,9 +200,29 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
   const [isSearching, setIsSearching] = useState(false);
   
   const [currentChat, setCurrentChat] = useState<Conversation | null>(null);
+  const [memoryProject, setMemoryProject] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   const t = (key: Parameters<typeof translate>[1]) => translate(language, key);
+
+  useEffect(() => {
+    // Proactive Project Recall: check recent work
+    const history = ShakurOS.getConversations();
+    const candidates = ['JANGAI', 'BILLING', 'PETAW'];
+    let foundProj: string | null = null;
+    for (const proj of candidates) {
+      const exists = history.some(c => 
+        (currentChat ? c.id !== currentChat.id : true) && 
+        (c.title?.toUpperCase().includes(proj) || 
+         c.messages.some(m => m.content.toUpperCase().includes(proj)))
+      );
+      if (exists) {
+        foundProj = proj;
+        break;
+      }
+    }
+    setMemoryProject(foundProj);
+  }, [currentChat]);
 
   // Load user context profile on session changes
   useEffect(() => {
@@ -262,7 +282,7 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
     return 'auto';
   };
 
-  const getGreeting = () => {
+  const getGreetingStructure = () => {
     const hour = new Date().getHours();
     const isEvening = hour >= 18;
     
@@ -275,21 +295,21 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
 
     const nameToUse = userContext?.firstName || (profile.name !== 'Utilisateur' ? profile.name : '');
     
-    if (session) {
-      if (nameToUse && nameToUse.trim()) {
-        return language === 'fr'
-          ? `Heureux de te revoir, ${nameToUse.trim()}.`
-          : `Good to see you again, ${nameToUse.trim()}.`;
-      }
-
-      return language === 'fr' ? 'Heureux de te revoir.' : 'Good to see you again.';
-    }
-
+    let title = '';
     if (nameToUse && nameToUse.trim()) {
-      return `${greet}, ${nameToUse.trim()}.`;
+      title = `${greet}, ${nameToUse.trim()}.`;
+    } else {
+      title = `${greet}.`;
     }
-    
-    return `${greet}.`;
+
+    let subtitle = '';
+    if (language === 'fr') {
+      subtitle = isEvening ? 'Ton second esprit est prêt.' : "Que souhaites-tu accomplir aujourd'hui ?";
+    } else {
+      subtitle = isEvening ? 'Your second mind is ready.' : 'What would you like to accomplish today?';
+    }
+
+    return { title, subtitle };
   };
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -533,13 +553,75 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
               <span className="greeting-brand-mark-warm">P<span className="brand-diaeresis">Ë</span>TAW</span>
             </div>
             <h1 className="greeting-title-warm">
-              {getGreeting()}
+              {getGreetingStructure().title}
             </h1>
             <p className="greeting-subtitle-warm">
-              {language === 'fr'
-                ? (session ? "Dis-moi ce qu’on fait maintenant." : "Que souhaites-tu accomplir aujourd'hui ?")
-                : (session ? "Tell me what we are doing now." : "What do you wish to accomplish today?")}
+              {getGreetingStructure().subtitle}
             </p>
+
+            {/* Premium Widgets Row */}
+            <div className="greeting-widgets-row-warm">
+              {/* Proactive project recall */}
+              {memoryProject && (
+                <div 
+                  className="widget-card-warm memory-widget-warm" 
+                  onClick={() => {
+                    const history = ShakurOS.getConversations();
+                    const foundConv = history.find(c => 
+                      c.title?.toUpperCase().includes(memoryProject) || 
+                      c.messages.some(m => m.content.toUpperCase().includes(memoryProject))
+                    );
+                    if (foundConv) {
+                      setCurrentChat(foundConv);
+                      setProviderId(foundConv.providerId);
+                      setModelId(foundConv.modelId);
+                    }
+                  }}
+                >
+                  <div className="widget-icon-copper">🧠</div>
+                  <div className="widget-content-warm">
+                    <span className="widget-label-warm">{language === 'fr' ? 'Reprendre' : 'Resume'}</span>
+                    <p className="widget-text-warm">
+                      {language === 'fr' 
+                        ? `Tu travaillais récemment sur ${memoryProject}. Souhaites-tu continuer ?`
+                        : `You were recently working on ${memoryProject}. Do you wish to continue?`}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Profile completeness card */}
+              {userContext && userUnderstandingService.calculateCompleteness(userContext, session?.user?.email || '') < 100 && (
+                <div 
+                  className="widget-card-warm profile-widget-warm" 
+                  onClick={() => {
+                    window.location.hash = '#/profile';
+                  }}
+                >
+                  <div className="widget-icon-gold">👤</div>
+                  <div className="widget-content-warm">
+                    <div className="widget-header-row-warm">
+                      <span className="widget-label-warm">{language === 'fr' ? 'Personnalisation' : 'Personalization'}</span>
+                      <span className="widget-percentage-warm">
+                        {userUnderstandingService.calculateCompleteness(userContext, session?.user?.email || '')}%
+                      </span>
+                    </div>
+                    <p className="widget-text-warm">
+                      {language === 'fr'
+                        ? "Complète ton profil pour affiner mes réponses."
+                        : "Complete your profile to refine my responses."}
+                    </p>
+                    <div className="widget-progressbar-outer-warm">
+                      <div 
+                        className="widget-progressbar-inner-warm" 
+                        style={{ width: `${userUnderstandingService.calculateCompleteness(userContext, session?.user?.email || '')}%` }} 
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <p className="greeting-manifesto-warm">
               {language === 'fr'
                 ? "Pose ta question naturellement. Je choisis le bon chemin derrière."

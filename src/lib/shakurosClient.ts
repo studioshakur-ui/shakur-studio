@@ -165,6 +165,8 @@ async function createHeaders(): Promise<HeadersInit> {
   };
 }
 
+import { userUnderstandingService } from './userUnderstandingService';
+
 function createPayload(
   providerId: string,
   modelId: string,
@@ -179,18 +181,59 @@ function createPayload(
   const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user')?.content || '';
   const detectedLang = detectConversationLanguage(lastUserMessage);
 
-  let finalMessages = messages;
-  if (detectedLang === 'wo') {
-    finalMessages = [
-      {
-        id: 'system-wo-prompt',
-        role: 'system',
-        content: 'Réponds en wolof, ton naturel et respectueux, sans mélanger excessivement le français sauf pour les termes techniques sans équivalent courant.',
-        timestamp: new Date().toISOString()
-      },
-      ...messages
-    ];
+  const context = userUnderstandingService.getLocalFallback();
+  const systemInstructions: string[] = [];
+
+  // 1. PETAW Identity Prompt
+  systemInstructions.push(
+    `[IDENTITÉ PETAW]\n` +
+    `Tu es PETAW (qui signifie "seconde pensée" ou "second esprit" en wolof/africain). ` +
+    `Tu es un assistant personnel intelligent premium pensé pour l'Afrique, développé par Shakur Studios. ` +
+    `Ton but est d'agir comme un "second esprit" pour assister tes utilisateurs dans le travail, l'apprentissage et la création. ` +
+    `Réponds de manière claire, concise, et directe. Si l'utilisateur demande qui tu es ou pourquoi tu existes, réponds en incarnant cette identité.`
+  );
+
+  // 2. User Context Prompt (if context is filled)
+  const profileFields: string[] = [];
+  if (context.firstName) profileFields.push(`Prénom: ${context.firstName}`);
+  if (context.lastName) profileFields.push(`Nom: ${context.lastName}`);
+  if (context.country) profileFields.push(`Pays: ${context.country}`);
+  if (context.profession) profileFields.push(`Profession: ${context.profession}`);
+  if (context.technicalLevel) profileFields.push(`Niveau technique: ${context.technicalLevel}`);
+  if (context.goals) profileFields.push(`Objectifs de l'utilisateur: ${context.goals}`);
+  if (context.interests && context.interests.length > 0) profileFields.push(`Domaines d'intérêt: ${context.interests.join(', ')}`);
+
+  if (profileFields.length > 0) {
+    systemInstructions.push(
+      `[PROFIL DE L'UTILISATEUR]\n` +
+      `Personnalise tes réponses en fonction de ce profil (sans mentionner explicitement que tu as accès à ces données sauf si c'est naturel) :\n` +
+      profileFields.join('\n')
+    );
   }
+
+  // 3. Response Language Preference
+  if (context.preferredResponseLanguage === 'wolof') {
+    systemInstructions.push(
+      `Réponds de préférence en Wolof. Utilise un ton naturel et respectueux, sans mélanger excessivement le français sauf pour les termes techniques.`
+    );
+  } else if (context.preferredResponseLanguage === 'swahili') {
+    systemInstructions.push(
+      `Réponds de préférence en Swahili.`
+    );
+  } else if (detectedLang === 'wo') {
+    systemInstructions.push(
+      `Réponds en wolof, ton naturel et respectueux, sans mélanger excessivement le français sauf pour les termes techniques.`
+    );
+  }
+
+  const injectedMessages = systemInstructions.map((content, idx) => ({
+    id: `system-injected-${idx}`,
+    role: 'system' as const,
+    content,
+    timestamp: new Date().toISOString()
+  }));
+
+  const finalMessages = [...injectedMessages, ...messages];
 
   return {
     mode: inferMode(providerId, mode),
