@@ -209,6 +209,21 @@ export function resolvePetawIntent(options: ResolveIntentOptions): ResolvedPetaw
 
   const latestUserText = options.text.trim().toLowerCase() || [...options.messages].reverse().find((message) => message.role === 'user')?.content.toLowerCase() || '';
 
+  if (detectRealtimeQuery(latestUserText)) {
+    return {
+      id: 'search',
+      modeId: 'fast',
+      taskType: 'general',
+      requiredCapabilities: ['chat'],
+      webSearchEnabled: true,
+      confidence: 0.9,
+      metadata: {
+        source: 'realtime_detector',
+        query: latestUserText
+      }
+    };
+  }
+
   const match = INTENT_KEYWORDS.find((candidate) => candidate.terms.some((term) => latestUserText.includes(term)));
   if (match) {
     return {
@@ -266,6 +281,29 @@ const ENGLISH_STOPWORDS: Set<string> = new Set([
 
 function stripAccents(str: string): string {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+const REALTIME_KEYWORDS = [
+  // French
+  'qui est', 'qui sont', 'quel est', 'quelle est', 'quels sont', 'quelles sont',
+  'actualité', 'actualite', 'météo', 'meteo', 'score', 'match', 'élection', 'election',
+  'prix de', 'aujourd\'hui', 'cette semaine', 'en ce moment', 'bourse', 'classement',
+  'dernier événement', 'derniers événements',
+  // English
+  'who is', 'who are', 'what is', 'what are', 'news', 'weather', 'match score',
+  'election', 'stock price', 'today', 'this week', 'currently', 'latest events',
+  // Wolof
+  'kan la', 'kan lan', 'lan la', 'lan lan', 'xibaar', 'hibar', 'tey', 'seyt',
+  'jaww', 'lu bees', 'lu bes'
+];
+
+export function detectRealtimeQuery(text: string): boolean {
+  if (!text) return false;
+  const clean = stripAccents(text.toLowerCase().trim());
+  return REALTIME_KEYWORDS.some((kw) => {
+    const cleanKw = stripAccents(kw);
+    return clean.includes(cleanKw);
+  });
 }
 
 export function detectConversationLanguage(text: string): 'fr' | 'en' | 'wo' {

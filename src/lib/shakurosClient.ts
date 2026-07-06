@@ -195,6 +195,7 @@ function createPayload(
   return {
     mode: inferMode(providerId, mode),
     taskType: intent.taskType,
+    webSearchEnabled: webSearchEnabled || intent.webSearchEnabled,
     preferredProviderId: optionalProviderPreference(providerId),
     preferredModelId: optionalModelPreference(mode),
     requiredCapabilities: intent.requiredCapabilities,

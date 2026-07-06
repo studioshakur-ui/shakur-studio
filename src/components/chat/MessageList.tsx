@@ -4,6 +4,8 @@ import { Message } from '../../lib/providers/providerTypes';
 interface MessageListProps {
   messages: Message[];
   isStreaming: boolean;
+  isSearching?: boolean;
+  language?: string;
 }
 
 function parseInlineMarkdown(text: string): ReactNode {
@@ -84,12 +86,12 @@ function parseInlineMarkdown(text: string): ReactNode {
   return <>{parts}</>;
 }
 
-export function MessageList({ messages, isStreaming }: MessageListProps) {
+export function MessageList({ messages, isStreaming, isSearching, language }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isStreaming]);
+  }, [messages, isStreaming, isSearching]);
 
   const visibleMessages = messages.filter((message) => !message.content.trim().startsWith('ShakurOS a traite la demande via'));
 
@@ -183,6 +185,31 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
     );
   };
 
+  const renderSources = (content: string) => {
+    const sources = extractMarkdownLinks(content);
+    if (sources.length === 0) {
+      return null;
+    }
+
+    return (
+      <div className="message-sources-container-warm" style={{ marginTop: '10px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        {sources.map((src, idx) => (
+          <a
+            key={idx}
+            href={src.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="source-card-warm"
+          >
+            <span style={{ fontWeight: 600, color: '#d97706' }}>{idx + 1}</span>
+            <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '145px' }}>{src.title}</span>
+            <span style={{ fontSize: '10px', opacity: 0.55 }}>• {src.domain}</span>
+          </a>
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="message-list-warm">
       {visibleMessages.map((msg, index) => {
@@ -207,6 +234,7 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
                 {msg.content || msg.artifacts?.length ? (
                   <>
                     {msg.content ? renderMessageContent(msg.content) : null}
+                    {!isUser && msg.content ? renderSources(msg.content) : null}
                     {renderArtifacts(msg)}
                   </>
                 ) : (
@@ -222,15 +250,22 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
         );
       })}
       
-      {isStreaming && (visibleMessages.length === 0 || visibleMessages[visibleMessages.length - 1].role !== 'assistant') && (
+      {(isStreaming || isSearching) && (visibleMessages.length === 0 || visibleMessages[visibleMessages.length - 1].role !== 'assistant') && (
         <div className="message-bubble-warm message-bubble-warm--assistant is-typing-warm is-generating-warm">
           <div className="message-payload-warm">
             <div className="message-body-warm">
-              <div className="typing-indicator-warm">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
+              {isSearching ? (
+                <div className="search-loader-warm">
+                  <span className="search-loader-icon-warm"></span>
+                  <span>{language === 'en' ? 'Verifying information…' : 'Vérification des informations…'}</span>
+                </div>
+              ) : (
+                <div className="typing-indicator-warm">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -239,4 +274,28 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
       <div ref={bottomRef} />
     </div>
   );
+}
+
+function extractMarkdownLinks(text: string): { title: string; url: string; domain: string }[] {
+  const links: { title: string; url: string; domain: string }[] = [];
+  const regex = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g;
+  let match;
+  const urlsSeen = new Set<string>();
+
+  while ((match = regex.exec(text)) !== null) {
+    const title = match[1];
+    const url = match[2];
+    if (!urlsSeen.has(url)) {
+      urlsSeen.add(url);
+      let domain = '';
+      try {
+        domain = new URL(url).hostname.replace('www.', '');
+      } catch {
+        domain = url;
+      }
+      links.push({ title, url, domain });
+    }
+  }
+
+  return links;
 }

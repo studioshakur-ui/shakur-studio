@@ -197,6 +197,7 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<PetawIntentPreset | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
   
   const [currentChat, setCurrentChat] = useState<Conversation | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -305,6 +306,11 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
       preset: selectedPreset ?? undefined
     });
 
+    const isSearchQuery = resolvedIntent.webSearchEnabled || webSearchEnabled;
+    if (isSearchQuery) {
+      setIsSearching(true);
+    }
+
     if (providerId === 'auto') {
       setModelId(resolvedIntent.modeId);
     }
@@ -399,20 +405,21 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
           chat.messages,
           webSearchEnabled,
           (progressText) => {
-          setCurrentChat((prevChat) => {
-            if (!prevChat) return null;
-            const msgs = [...prevChat.messages];
-            const lastMsgIdx = msgs.findIndex(m => m.id === assistantMsgId);
-            if (lastMsgIdx >= 0) {
-              msgs[lastMsgIdx] = {
-                ...msgs[lastMsgIdx],
-                content: progressText
-              };
-            }
-            const finalChat = { ...prevChat, messages: msgs };
-            ShakurOS.saveConversation(finalChat);
-            return finalChat;
-          });
+            setIsSearching(false);
+            setCurrentChat((prevChat) => {
+              if (!prevChat) return null;
+              const msgs = [...prevChat.messages];
+              const lastMsgIdx = msgs.findIndex(m => m.id === assistantMsgId);
+              if (lastMsgIdx >= 0) {
+                msgs[lastMsgIdx] = {
+                  ...msgs[lastMsgIdx],
+                  content: progressText
+                };
+              }
+              const finalChat = { ...prevChat, messages: msgs };
+              ShakurOS.saveConversation(finalChat);
+              return finalChat;
+            });
           },
           resolvedIntent
         );
@@ -432,6 +439,7 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
         return { ...prevChat, messages: msgs };
       });
     } finally {
+      setIsSearching(false);
       setIsStreaming(false);
       setSelectedPreset(null);
       setTimeout(() => textareaRef.current?.focus(), 50);
@@ -539,7 +547,7 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
             </p>
           </div>
         ) : (
-          <MessageList messages={currentChat.messages} isStreaming={isStreaming} />
+          <MessageList messages={currentChat.messages} isStreaming={isStreaming} isSearching={isSearching} language={language} />
         )}
       </div>
 
