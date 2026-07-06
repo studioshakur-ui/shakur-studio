@@ -1,5 +1,5 @@
 import { Message } from './providers/providerTypes';
-import { chatWithShakurOS } from './shakurosClient';
+import { chatWithShakurOS, GenerateImageOptions, ImageGenerationResponse, generateImageWithShakurOS } from './shakurosClient';
 import { ResolvedPetawIntent } from './intentRouter';
 
 export interface Conversation {
@@ -221,5 +221,9 @@ export class ShakurOS {
     intent: ResolvedPetawIntent
   ): Promise<string> {
     return chatWithShakurOS(providerId, modelId, messages, webSearchEnabled, onProgress, intent);
+  }
+
+  static async generateImage(options: GenerateImageOptions): Promise<ImageGenerationResponse> {
+    return generateImageWithShakurOS(options);
   }
 }

@@ -46,7 +46,6 @@ export default function App() {
         return (
           <ChatPage
             language={language}
-            navigate={navigate}
             activeChat={activeChatToLoad}
             onResetActiveChat={() => setActiveChatToLoad(null)}
             session={session}
@@ -74,7 +73,6 @@ export default function App() {
         return (
           <ChatPage
             language={language}
-            navigate={navigate}
             activeChat={activeChatToLoad}
             onResetActiveChat={() => setActiveChatToLoad(null)}
             session={session}

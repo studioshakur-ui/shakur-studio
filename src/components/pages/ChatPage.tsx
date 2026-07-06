@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Globe, Trash2, StopCircle, RefreshCw, PenLine, Camera, Mic, Search, Briefcase, Brain, Sparkles, BookOpenCheck } from 'lucide-react';
-import { ModelSelector } from '../chat/ModelSelector';
+import { Send, Globe, Trash2, StopCircle, RefreshCw } from 'lucide-react';
 import { MessageList } from '../chat/MessageList';
 import { ShakurOS, Conversation } from '../../lib/shakurOS';
 import { Message } from '../../lib/providers/providerTypes';
-import { RoutePath } from '../../lib/router';
 import { translate } from '../../i18n/config';
 import { Language } from '../../i18n/translations';
 import { Session } from '@supabase/supabase-js';
@@ -13,7 +11,6 @@ import { PetawIntentId, PetawIntentPreset, PetawModeId, resolvePetawIntent, Shak
 
 interface ChatPageProps {
   language: Language;
-  navigate: (to: RoutePath) => void;
   activeChat: Conversation | null;
   onResetActiveChat: () => void;
   session: Session | null;
@@ -24,7 +21,6 @@ interface SuggestionAction {
   title: string;
   description: string;
   prompt: string;
-  icon: React.ComponentType<{ size?: number }>;
   accent: 'gold' | 'copper' | 'pearl' | 'sage';
   modeId: PetawModeId;
   taskType: ShakurTaskType;
@@ -39,7 +35,6 @@ function buildAdaptiveActions(language: Language, isEvening: boolean, hasProfile
           title: isEvening ? 'Clarifier une idée' : 'Poser une question',
           description: isEvening ? 'Démêle vite un sujet avant de finir la journée.' : 'Une réponse nette, directe et contextualisée.',
           prompt: isEvening ? 'Aide-moi à clarifier cette idée étape par étape.' : 'J’ai une question précise et je veux une réponse claire.',
-          icon: Sparkles,
           accent: 'gold',
           modeId: 'auto',
           taskType: 'general'
@@ -49,7 +44,6 @@ function buildAdaptiveActions(language: Language, isEvening: boolean, hasProfile
           title: 'Capturer et comprendre',
           description: 'Photo, document ou capture: explique, résume, extrait.',
           prompt: 'Je vais envoyer une photo ou un document. Prépare-toi à l’analyser clairement.',
-          icon: Camera,
           accent: 'pearl',
           modeId: 'premium',
           taskType: 'document'
@@ -59,7 +53,6 @@ function buildAdaptiveActions(language: Language, isEvening: boolean, hasProfile
           title: 'Recherche en direct',
           description: 'Trouve des infos récentes et synthétise le vrai signal.',
           prompt: 'Fais une recherche web et donne-moi une synthèse fiable et courte.',
-          icon: Search,
           accent: 'sage',
           enableWebSearch: true,
           modeId: 'fast',
@@ -70,7 +63,6 @@ function buildAdaptiveActions(language: Language, isEvening: boolean, hasProfile
           title: 'Écrire pour moi',
           description: 'Message, mail, post ou texte déjà bien formulé.',
           prompt: 'Rédige un texte utile, propre et prêt à envoyer.',
-          icon: PenLine,
           accent: 'copper',
           modeId: 'premium',
           taskType: 'writing'
@@ -80,7 +72,6 @@ function buildAdaptiveActions(language: Language, isEvening: boolean, hasProfile
           title: 'Apprendre vite',
           description: 'Explique comme un coach, avec étapes et mini quiz.',
           prompt: 'Explique-moi ce sujet simplement puis teste ma compréhension.',
-          icon: BookOpenCheck,
           accent: 'gold',
           modeId: 'premium',
           taskType: 'education'
@@ -90,7 +81,6 @@ function buildAdaptiveActions(language: Language, isEvening: boolean, hasProfile
           title: 'Mode travail',
           description: 'Décision, résumé, devis, plan d’action, argumentaire.',
           prompt: 'Aide-moi à produire un résultat concret pour le travail.',
-          icon: Briefcase,
           accent: 'pearl',
           modeId: 'premium',
           taskType: 'reasoning'
@@ -100,7 +90,6 @@ function buildAdaptiveActions(language: Language, isEvening: boolean, hasProfile
           title: 'Pensée vocale',
           description: 'Parle naturellement, PËTAW structure ensuite.',
           prompt: 'Je vais te dicter une idée brute. Structure-la proprement.',
-          icon: Mic,
           accent: 'sage',
           modeId: 'fast',
           taskType: 'general'
@@ -110,7 +99,6 @@ function buildAdaptiveActions(language: Language, isEvening: boolean, hasProfile
           title: hasProfile ? 'Mémoire personnelle' : 'Mieux me connaître',
           description: hasProfile ? 'Reprends mon contexte et avance sans repartir de zéro.' : 'Construisons un contexte personnel utile pour mieux t’aider.',
           prompt: hasProfile ? 'Reprends ce que tu sais déjà de moi et aide-moi à avancer.' : 'Aide-moi à construire mon profil d’usage étape par étape.',
-          icon: Brain,
           accent: 'copper',
           modeId: 'auto',
           taskType: 'reasoning'
@@ -122,7 +110,6 @@ function buildAdaptiveActions(language: Language, isEvening: boolean, hasProfile
           title: isEvening ? 'Untangle an idea' : 'Ask anything',
           description: isEvening ? 'Get clarity quickly before ending your day.' : 'A direct, clean, contextual answer.',
           prompt: isEvening ? 'Help me untangle this idea step by step.' : 'I have a precise question and want a clear answer.',
-          icon: Sparkles,
           accent: 'gold',
           modeId: 'auto',
           taskType: 'general'
@@ -132,7 +119,6 @@ function buildAdaptiveActions(language: Language, isEvening: boolean, hasProfile
           title: 'Capture and understand',
           description: 'Photo, document, screenshot: explain, summarize, extract.',
           prompt: 'I am about to send a photo or document. Be ready to analyze it clearly.',
-          icon: Camera,
           accent: 'pearl',
           modeId: 'premium',
           taskType: 'document'
@@ -142,7 +128,6 @@ function buildAdaptiveActions(language: Language, isEvening: boolean, hasProfile
           title: 'Live search',
           description: 'Find fresh information and compress the real signal.',
           prompt: 'Search the web and give me a short reliable synthesis.',
-          icon: Search,
           accent: 'sage',
           enableWebSearch: true,
           modeId: 'fast',
@@ -153,7 +138,6 @@ function buildAdaptiveActions(language: Language, isEvening: boolean, hasProfile
           title: 'Write for me',
           description: 'Message, email, post, or text ready to send.',
           prompt: 'Write something useful, polished, and ready to send.',
-          icon: PenLine,
           accent: 'copper',
           modeId: 'premium',
           taskType: 'writing'
@@ -163,7 +147,6 @@ function buildAdaptiveActions(language: Language, isEvening: boolean, hasProfile
           title: 'Learn faster',
           description: 'Explain like a coach, then test me briefly.',
           prompt: 'Teach me this simply, then test my understanding.',
-          icon: BookOpenCheck,
           accent: 'gold',
           modeId: 'premium',
           taskType: 'education'
@@ -173,7 +156,6 @@ function buildAdaptiveActions(language: Language, isEvening: boolean, hasProfile
           title: 'Work mode',
           description: 'Decision prep, summary, quote, plan, argument, brief.',
           prompt: 'Help me produce a concrete result for work.',
-          icon: Briefcase,
           accent: 'pearl',
           modeId: 'premium',
           taskType: 'reasoning'
@@ -183,7 +165,6 @@ function buildAdaptiveActions(language: Language, isEvening: boolean, hasProfile
           title: 'Voice thought',
           description: 'Speak naturally, PËTAW structures it afterwards.',
           prompt: 'I am about to dictate a raw idea. Structure it clearly.',
-          icon: Mic,
           accent: 'sage',
           modeId: 'fast',
           taskType: 'general'
@@ -193,7 +174,6 @@ function buildAdaptiveActions(language: Language, isEvening: boolean, hasProfile
           title: hasProfile ? 'Personal memory' : 'Know me better',
           description: hasProfile ? 'Resume from my context instead of restarting.' : 'Let’s build useful personal context to help me better.',
           prompt: hasProfile ? 'Resume from what you already know about me and help me move forward.' : 'Help me build my usage profile step by step.',
-          icon: Brain,
           accent: 'copper',
           modeId: 'auto',
           taskType: 'reasoning'
@@ -207,7 +187,7 @@ function buildAdaptiveActions(language: Language, isEvening: boolean, hasProfile
   return [...actions].sort((left, right) => priority.indexOf(left.id) - priority.indexOf(right.id));
 }
 
-export function ChatPage({ language, navigate, activeChat, onResetActiveChat, session }: ChatPageProps) {
+export function ChatPage({ language, activeChat, onResetActiveChat, session }: ChatPageProps) {
   const [profile, setProfile] = useState(() => ShakurOS.getProfile());
   const [providerId, setProviderId] = useState(profile.defaultProviderId);
   const [modelId, setModelId] = useState(profile.defaultModelId);
@@ -274,6 +254,13 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat, se
     setSelectedPreset((current) => current ? { ...current, modeId: mId as PetawModeId } : current);
   };
 
+  const toImageMode = (mode: PetawModeId) => {
+    if (mode === 'premium') return 'premium';
+    if (mode === 'economy') return 'economical';
+    if (mode === 'local') return 'local';
+    return 'auto';
+  };
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     const isEvening = hour >= 18;
@@ -287,6 +274,16 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat, se
 
     const nameToUse = userContext?.firstName || (profile.name !== 'Utilisateur' ? profile.name : '');
     
+    if (session) {
+      if (nameToUse && nameToUse.trim()) {
+        return language === 'fr'
+          ? `Heureux de te revoir, ${nameToUse.trim()}.`
+          : `Good to see you again, ${nameToUse.trim()}.`;
+      }
+
+      return language === 'fr' ? 'Heureux de te revoir.' : 'Good to see you again.';
+    }
+
     if (nameToUse && nameToUse.trim()) {
       return `${greet}, ${nameToUse.trim()}.`;
     }
@@ -356,12 +353,52 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat, se
     setCurrentChat(updatedChatWithPlaceholder);
 
     try {
-      await ShakurOS.chat(
-        providerId,
-        providerId === 'auto' ? resolvedIntent.modeId : modelId,
-        chat.messages,
-        webSearchEnabled,
-        (progressText) => {
+      if (resolvedIntent.id === 'image_generation') {
+        const imageResult = await ShakurOS.generateImage({
+          prompt: userMessageText,
+          mode: toImageMode(resolvedIntent.modeId),
+          quality: resolvedIntent.modeId === 'premium' ? 'high' : 'standard',
+          style: 'african-premium',
+          size: '1024x1024',
+          count: 1,
+          locale: language
+        });
+
+        setCurrentChat((prevChat) => {
+          if (!prevChat) return null;
+          const msgs = [...prevChat.messages];
+          const lastMsgIdx = msgs.findIndex(m => m.id === assistantMsgId);
+          if (lastMsgIdx >= 0) {
+            msgs[lastMsgIdx] = {
+              ...msgs[lastMsgIdx],
+              content: language === 'fr' ? "Voici l'image." : 'Here is the image.',
+              artifacts: imageResult.images.map((image) => ({
+                type: 'image',
+                id: image.id,
+                prompt: image.prompt,
+                mimeType: image.mimeType,
+                dataUrl: image.dataUrl,
+                url: image.url,
+                width: image.width,
+                height: image.height,
+                provider: imageResult.provider,
+                model: imageResult.model,
+                estimatedCost: imageResult.estimatedCost,
+                fallbackUsed: imageResult.fallbackUsed
+              }))
+            };
+          }
+          const finalChat = { ...prevChat, messages: msgs };
+          ShakurOS.saveConversation(finalChat);
+          return finalChat;
+        });
+      } else {
+        await ShakurOS.chat(
+          providerId,
+          providerId === 'auto' ? resolvedIntent.modeId : modelId,
+          chat.messages,
+          webSearchEnabled,
+          (progressText) => {
           setCurrentChat((prevChat) => {
             if (!prevChat) return null;
             const msgs = [...prevChat.messages];
@@ -376,9 +413,10 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat, se
             ShakurOS.saveConversation(finalChat);
             return finalChat;
           });
-        },
-        resolvedIntent
-      );
+          },
+          resolvedIntent
+        );
+      }
     } catch (err) {
       console.error(err);
       setCurrentChat((prevChat) => {
@@ -426,14 +464,9 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat, se
   };
 
   const isChatEmpty = !currentChat || currentChat.messages.length === 0;
-  const completeness = userContext ? userUnderstandingService.calculateCompleteness(userContext, session?.user?.email || '') : 0;
-  const isProfileIncomplete = completeness < 100;
   const currentHour = new Date().getHours();
   const isEvening = currentHour >= 18;
   const adaptiveActions = buildAdaptiveActions(language, isEvening, Boolean(userContext?.firstName || userContext?.lastName || session?.user?.email));
-  const highlightedAction = selectedPreset
-    ? adaptiveActions.find((action) => action.id === selectedPreset.id) ?? adaptiveActions[0]
-    : adaptiveActions[0];
 
   const handleActionSelect = (action: SuggestionAction) => {
     const preset: PetawIntentPreset = {
@@ -490,34 +523,20 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat, se
           <div className="chat-greeting-view-warm">
             <div className="greeting-brand-kicker-warm">
               <span className="greeting-brand-mark-warm">P<span className="brand-diaeresis">Ë</span>TAW</span>
-              <span className="greeting-brand-copy-warm">
-                {language === 'fr' ? 'Assistant personnel vivant' : 'Living personal assistant'}
-              </span>
             </div>
             <h1 className="greeting-title-warm">
               {getGreeting()}
             </h1>
             <p className="greeting-subtitle-warm">
-              {language === 'fr' ? "Que souhaites-tu accomplir aujourd'hui ?" : "What do you wish to accomplish today?"}
+              {language === 'fr'
+                ? (session ? "Dis-moi ce qu’on fait maintenant." : "Que souhaites-tu accomplir aujourd'hui ?")
+                : (session ? "Tell me what we are doing now." : "What do you wish to accomplish today?")}
             </p>
             <p className="greeting-manifesto-warm">
               {language === 'fr'
-                ? "Écris, parle, capture, cherche, apprends ou produis un résultat concret. PËTAW adapte son mode à ton moment."
-                : "Write, speak, capture, search, learn, or produce something concrete. PËTAW adapts its mode to your moment."}
+                ? "Pose ta question naturellement. Je choisis le bon chemin derrière."
+                : "Ask naturally. I’ll choose the right path behind the scenes."}
             </p>
-            <div className="landing-routing-preview-warm">
-              <span className="routing-preview-label-warm">
-                {language === 'fr' ? 'Mode en avant' : 'Featured mode'}
-              </span>
-              <div className="routing-preview-track-warm">
-                <span className="routing-preview-pill-warm">{highlightedAction.title}</span>
-                <span className="routing-preview-meta-warm">
-                  {language === 'fr'
-                    ? `Routage ${highlightedAction.modeId} • tâche ${highlightedAction.taskType}`
-                    : `${highlightedAction.modeId} routing • ${highlightedAction.taskType} task`}
-                </span>
-              </div>
-            </div>
           </div>
         ) : (
           <MessageList messages={currentChat.messages} isStreaming={isStreaming} />
@@ -550,12 +569,6 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat, se
                 <span>{language === 'fr' ? 'Recherche Web' : 'Web Search'}</span>
               </button>
 
-              <ModelSelector
-                selectedProviderId={providerId}
-                selectedModelId={modelId}
-                onChange={handleModelChange}
-              />
-
               <div className="send-action-group-warm">
                 {isStreaming ? (
                   <button
@@ -583,18 +596,14 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat, se
           {input.trim() === '' && isChatEmpty && (
             <div className="suggestions-container-warm">
               <div className="suggestions-header-warm">
-                <span className="suggestions-eyebrow-warm">
-                  {language === 'fr' ? 'Modes adaptatifs' : 'Adaptive modes'}
-                </span>
                 <p className="suggestions-heading-warm">
                   {language === 'fr'
-                    ? "Huit façons d’utiliser PËTAW, réordonnées selon ton contexte."
-                    : "Eight ways to use PËTAW, reordered for your context."}
+                    ? "Quelques idées pour démarrer."
+                    : "A few ways to begin."}
                 </p>
               </div>
               <div className="input-suggestions-grid-warm">
                 {adaptiveActions.map((action) => {
-                  const Icon = action.icon;
                   return (
                     <button
                       key={action.id}
@@ -602,9 +611,6 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat, se
                       onClick={() => handleActionSelect(action)}
                       className={`suggestion-card-warm accent-${action.accent} ${selectedPreset?.id === action.id ? 'is-selected' : ''}`}
                     >
-                      <div className="suggestion-card-icon-warm">
-                        <Icon size={20} />
-                      </div>
                       <div className="suggestion-card-content-warm">
                         <span className="suggestion-card-title-warm">
                           {action.title}
@@ -617,20 +623,6 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat, se
                   );
                 })}
               </div>
-
-              {/* Profile incompleteness warning banner placed under suggestions */}
-              {session && isProfileIncomplete && (
-                <div className="profile-warning-banner-warm">
-                  <span>{language === 'fr' ? 'Pour mieux vous connaître, complétez votre profil.' : 'To know you better, complete your profile.'}</span>
-                  <button 
-                    type="button" 
-                    onClick={() => navigate('/profile')} 
-                    className="banner-action-btn-warm"
-                  >
-                    {language === 'fr' ? 'Compléter mon profil' : 'Complete my profile'}
-                  </button>
-                </div>
-              )}
             </div>
           )}
         </form>

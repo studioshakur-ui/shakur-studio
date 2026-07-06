@@ -3,7 +3,24 @@ export interface Message {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+  artifacts?: MessageArtifact[];
 }
+
+export type MessageArtifact =
+  | {
+      type: 'image';
+      id: string;
+      prompt: string;
+      mimeType: 'image/png' | 'image/jpeg' | 'image/webp';
+      dataUrl?: string;
+      url?: string;
+      width: number;
+      height: number;
+      provider?: string;
+      model?: string;
+      estimatedCost?: number;
+      fallbackUsed?: boolean;
+    };
 
 export interface ModelConfig {
   id: string;

@@ -16,6 +16,45 @@ interface StreamEvent {
 }
 
 type RoutingMode = 'auto' | 'cheap' | 'balanced' | 'premium' | 'local';
+type ImageGenerationMode = 'auto' | 'economical' | 'premium' | 'local';
+type ImageGenerationQuality = 'auto' | 'standard' | 'high';
+type ImageGenerationStyle = 'auto' | 'realistic' | 'illustration' | 'product' | 'editorial' | 'african-premium';
+type ImageGenerationSize = '1024x1024' | '1024x1536' | '1536x1024';
+
+export interface GeneratedImageArtifact {
+  id: string;
+  prompt: string;
+  mimeType: 'image/png' | 'image/jpeg' | 'image/webp';
+  dataUrl?: string;
+  url?: string;
+  width: number;
+  height: number;
+}
+
+export interface ImageGenerationResponse {
+  id: string;
+  provider: string;
+  model: string;
+  mode: ImageGenerationMode;
+  images: GeneratedImageArtifact[];
+  latencyMs: number;
+  fallbackUsed: boolean;
+  attemptedProviders: string[];
+  failureReasons: Array<{ provider: string; code: string; message: string }>;
+  estimatedCost: number;
+  createdAt: string;
+}
+
+export interface GenerateImageOptions {
+  prompt: string;
+  mode?: ImageGenerationMode;
+  quality?: ImageGenerationQuality;
+  style?: ImageGenerationStyle;
+  size?: ImageGenerationSize;
+  count?: number;
+  locale?: string;
+  country?: string;
+}
 
 const API_URL = (import.meta.env.VITE_SHAKUROS_API_URL ?? 'http://localhost:8787').replace(/\/$/, '');
 const PETAW_MODE_IDS = new Set(['auto', 'fast', 'economy', 'premium', 'local']);
@@ -225,4 +264,31 @@ async function chatWithoutStreaming(
   const result = await response.json() as ChatResponse;
   onProgress(result.text);
   return result.text;
+}
+
+export async function generateImageWithShakurOS(options: GenerateImageOptions): Promise<ImageGenerationResponse> {
+  const response = await fetch(`${API_URL}/v1/images/generate`, {
+    method: 'POST',
+    headers: await createHeaders(),
+    body: JSON.stringify({
+      prompt: options.prompt,
+      mode: options.mode ?? 'auto',
+      quality: options.quality ?? 'standard',
+      style: options.style ?? 'african-premium',
+      size: options.size ?? '1024x1024',
+      count: options.count ?? 1,
+      metadata: {
+        app: 'petaw-web',
+        locale: options.locale,
+        country: options.country
+      }
+    })
+  });
+
+  if (!response.ok) {
+    const fallback = await response.json().catch(() => null) as { error?: string } | null;
+    throw new Error(fallback?.error ?? `ShakurOS image request failed with status ${response.status}`);
+  }
+
+  return response.json() as Promise<ImageGenerationResponse>;
 }

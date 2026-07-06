@@ -91,47 +91,18 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isStreaming]);
 
-  const isDebugMessage = (content: string) => {
-    return content.trim().startsWith('ShakurOS a traite la demande via');
-  };
+  const visibleMessages = messages.filter((message) => !message.content.trim().startsWith('ShakurOS a traite la demande via'));
 
   const renderMessageContent = (content: string) => {
-    if (isDebugMessage(content)) {
-      return (
-        <div className="shakuros-routing-details-warm">
-          <details className="routing-details-toggle">
-            <summary className="routing-details-summary">
-              <span>Routage technique ShakurOS</span>
-            </summary>
-            <div className="routing-details-content">
-              <p>{parseInlineMarkdown(content)}</p>
-            </div>
-          </details>
-        </div>
-      );
-    }
-
     const thinkingMatch = content.match(/\[Chaîne de Pensée - Raisonnement DeepSeek-R1\]\n([\s\S]*?)\n\n/);
     let mainContent = content;
-    let thinkingBlock = '';
 
     if (thinkingMatch) {
-      thinkingBlock = thinkingMatch[1];
       mainContent = content.replace(thinkingMatch[0], '');
     }
 
     return (
       <div className="message-content-wrapper-warm">
-        {thinkingBlock && (
-          <details className="thinking-details-warm">
-            <summary className="thinking-summary-warm">Raisonnement PETAW (DeepSeek-R1)</summary>
-            <div className="thinking-content-warm">
-              {thinkingBlock.split('\n').map((line, i) => (
-                <p key={i}>{parseInlineMarkdown(line)}</p>
-              ))}
-            </div>
-          </details>
-        )}
         <div className="message-text-warm">
           {mainContent.split('\n').map((line, index) => {
             const delayStyle = { animationDelay: `${index * 0.05}s` };
@@ -183,12 +154,40 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
     );
   };
 
+  const renderArtifacts = (msg: Message) => {
+    if (!msg.artifacts?.length) {
+      return null;
+    }
+
+    return (
+      <div className="message-artifacts-warm">
+        {msg.artifacts.map((artifact) => {
+          if (artifact.type === 'image') {
+            return (
+              <figure key={artifact.id} className="image-artifact-warm">
+                <img
+                  src={artifact.dataUrl ?? artifact.url}
+                  alt={artifact.prompt}
+                  width={artifact.width}
+                  height={artifact.height}
+                  loading="lazy"
+                />
+                <figcaption>{artifact.prompt}</figcaption>
+              </figure>
+            );
+          }
+
+          return null;
+        })}
+      </div>
+    );
+  };
 
   return (
     <div className="message-list-warm">
-      {messages.map((msg, index) => {
+      {visibleMessages.map((msg, index) => {
         const isUser = msg.role === 'user';
-        const isLast = index === messages.length - 1;
+        const isLast = index === visibleMessages.length - 1;
         const isGenerating = isLast && isStreaming;
         return (
           <div
@@ -205,7 +204,12 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
                 </span>
               </div>
               <div className="message-body-warm">
-                {msg.content ? renderMessageContent(msg.content) : (
+                {msg.content || msg.artifacts?.length ? (
+                  <>
+                    {msg.content ? renderMessageContent(msg.content) : null}
+                    {renderArtifacts(msg)}
+                  </>
+                ) : (
                   <div className="typing-indicator-warm">
                     <span></span>
                     <span></span>
@@ -218,7 +222,7 @@ export function MessageList({ messages, isStreaming }: MessageListProps) {
         );
       })}
       
-      {isStreaming && (messages.length === 0 || messages[messages.length - 1].role !== 'assistant') && (
+      {isStreaming && (visibleMessages.length === 0 || visibleMessages[visibleMessages.length - 1].role !== 'assistant') && (
         <div className="message-bubble-warm message-bubble-warm--assistant is-typing-warm is-generating-warm">
           <div className="message-payload-warm">
             <div className="message-body-warm">

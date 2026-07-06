@@ -7,6 +7,7 @@ export type PetawIntentId =
   | 'ask'
   | 'general'
   | 'capture'
+  | 'image_generation'
   | 'search'
   | 'write'
   | 'writing'
@@ -50,6 +51,28 @@ const INTENT_KEYWORDS: Array<{
   terms: string[];
   confidence: number;
 }> = [
+  {
+    id: 'image_generation',
+    modeId: 'premium',
+    taskType: 'general',
+    requiredCapabilities: ['chat'],
+    terms: [
+      'génère une image',
+      'genere une image',
+      'crée une image',
+      'cree une image',
+      'dessine',
+      'illustration de',
+      'image de',
+      'photo réaliste de',
+      'photo realiste de',
+      'generate an image',
+      'create an image',
+      'draw',
+      'make an image'
+    ],
+    confidence: 0.94
+  },
   {
     id: 'capture',
     modeId: 'premium',
