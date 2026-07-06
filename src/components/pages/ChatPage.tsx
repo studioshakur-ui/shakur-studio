@@ -380,8 +380,11 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
 
     try {
       if (resolvedIntent.id === 'image_generation') {
+        const imagePrompt = typeof resolvedIntent.metadata.imagePrompt === 'string'
+          ? resolvedIntent.metadata.imagePrompt
+          : userMessageText;
         const imageResult = await ShakurOS.generateImage({
-          prompt: userMessageText,
+          prompt: imagePrompt,
           mode: toImageMode(resolvedIntent.modeId),
           quality: resolvedIntent.modeId === 'premium' ? 'high' : 'standard',
           style: 'african-premium',

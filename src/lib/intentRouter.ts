@@ -191,6 +191,76 @@ const INTENT_KEYWORDS: Array<{
   }
 ];
 
+const IMAGE_TRIGGER_WORDS = ['image', 'images', 'photo', 'photos', 'illustration', 'dessin', 'nataal', 'natal'];
+const GENERATION_VERBS = [
+  'genere', 'génère', 'genererais', 'generer', 'générer',
+  'cree', 'crée', 'creer', 'créer',
+  'dessine', 'dessiner',
+  'fais', 'fait', 'faire',
+  'defal', 'sosal'
+];
+
+// Cheap edit-distance check so short mobile-typo replies (e.g. "ilmage") still
+// resolve to the same intent a correctly spelled reply would.
+function levenshteinDistance(a: string, b: string): number {
+  const rows = a.length + 1;
+  const cols = b.length + 1;
+  const matrix: number[][] = Array.from({ length: rows }, (_, i) => [i, ...new Array(cols - 1).fill(0)]);
+  for (let j = 1; j < cols; j += 1) matrix[0][j] = j;
+
+  for (let i = 1; i < rows; i += 1) {
+    for (let j = 1; j < cols; j += 1) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost
+      );
+    }
+  }
+
+  return matrix[rows - 1][cols - 1];
+}
+
+function containsLikelyImageMention(text: string): boolean {
+  const words = stripAccents(text.toLowerCase()).split(/[^a-z]+/).filter(Boolean);
+  return words.some((word) => IMAGE_TRIGGER_WORDS.some((target) => levenshteinDistance(word, target) <= 1));
+}
+
+function findEarlierGenerationRequest(messages: Message[]): Message | undefined {
+  return [...messages].reverse().find((message) => {
+    if (message.role !== 'user') return false;
+    const normalized = stripAccents(message.content.toLowerCase());
+    return GENERATION_VERBS.some((verb) => normalized.includes(verb));
+  });
+}
+
+const TEMPORAL_CORRECTION_MARKERS = [
+  'on est en', 'nous sommes en', 'on est le', 'nous sommes le',
+  'en fait on est', 'actuellement on est', "aujourd'hui on est",
+  'we are in', 'it is currently', "it's currently", 'today is'
+];
+
+function mentionsYear(text: string): boolean {
+  return /\b(19|20)\d{2}\b/.test(text);
+}
+
+// A bare date correction like "on est en juillet 2026" carries no subject of
+// its own — it only makes sense as a correction to an earlier real-time
+// question in the same conversation (e.g. "qui est le président de
+// l'assemblée"). Detecting it lets us re-run the search instead of letting
+// the model answer the correction from its own (possibly stale) training
+// knowledge, which can silently contradict the answer already given earlier
+// in the same conversation.
+function isTemporalCorrection(text: string): boolean {
+  const normalized = stripAccents(text.toLowerCase());
+  return mentionsYear(normalized) && TEMPORAL_CORRECTION_MARKERS.some((marker) => normalized.includes(stripAccents(marker)));
+}
+
+function findEarlierRealtimeQuery(messages: Message[]): Message | undefined {
+  return [...messages].reverse().find((message) => message.role === 'user' && detectRealtimeQuery(message.content.toLowerCase()));
+}
+
 export function resolvePetawIntent(options: ResolveIntentOptions): ResolvedPetawIntent {
   if (options.preset) {
     return {
@@ -220,6 +290,50 @@ export function resolvePetawIntent(options: ResolveIntentOptions): ResolvedPetaw
       metadata: {
         source: 'realtime_detector',
         query: latestUserText
+      }
+    };
+  }
+
+  if (isTemporalCorrection(latestUserText)) {
+    const earlierRealtimeQuery = findEarlierRealtimeQuery(options.messages);
+    if (earlierRealtimeQuery) {
+      return {
+        id: 'search',
+        modeId: 'fast',
+        taskType: 'general',
+        requiredCapabilities: ['chat'],
+        webSearchEnabled: true,
+        confidence: 0.88,
+        metadata: {
+          source: 'temporal_correction_followup',
+          query: `${earlierRealtimeQuery.content} (${options.text.trim()})`
+        }
+      };
+    }
+  }
+
+  // A short reply like "une ilmage" (typo of "image") answering PETAW's own
+  // clarification after an earlier "génère/crée ..." request should still
+  // resolve to image_generation, even though it doesn't match the exact
+  // phrases in INTENT_KEYWORDS and the word itself may be misspelled.
+  const earlierGenerationRequest = containsLikelyImageMention(latestUserText)
+    ? findEarlierGenerationRequest(options.messages)
+    : undefined;
+  if (earlierGenerationRequest) {
+    return {
+      id: 'image_generation',
+      modeId: 'premium',
+      taskType: 'general',
+      requiredCapabilities: ['chat'],
+      webSearchEnabled: options.webSearchEnabled,
+      confidence: 0.9,
+      metadata: {
+        source: 'context_followup',
+        matchedIntent: 'image_generation',
+        // The reply itself ("une ilmage") carries no subject — the actual
+        // thing to draw was named in the earlier turn that prompted PETAW's
+        // clarifying question, so combine both for the actual image prompt.
+        imagePrompt: `${earlierGenerationRequest.content} ${options.text.trim()}`.trim()
       }
     };
   }
