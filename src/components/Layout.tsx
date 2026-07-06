@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Globe, Moon, Sun, MessageCircle, Clock3, FileText, Database, PanelsTopLeft, Settings, LogOut, User, PanelLeftClose, PanelLeftOpen, Shield } from 'lucide-react';
+import { Menu, X, Globe, Moon, Sun, MessageCircle, Clock3, FileText, Database, PanelsTopLeft, Settings, LogOut, User, PanelLeftClose, PanelLeftOpen, Shield, Gauge } from 'lucide-react';
 import { RoutePath } from '../lib/router';
 import { Language } from '../i18n/translations';
 import { translate } from '../i18n/config';
@@ -94,7 +94,8 @@ export function Layout({
     { path: '/documents' as RoutePath, label: t('nav.documents'), icon: FileText },
     { path: '/memory' as RoutePath, label: t('nav.memory'), icon: Database },
     { path: '/workspace' as RoutePath, label: t('nav.workspace'), icon: PanelsTopLeft },
-    { path: '/settings' as RoutePath, label: t('nav.settings'), icon: Settings }
+    { path: '/settings' as RoutePath, label: t('nav.settings'), icon: Settings },
+    { path: '/admin' as RoutePath, label: t('nav.admin'), icon: Gauge }
   ];
 
   const handleNavClick = (path: RoutePath) => {

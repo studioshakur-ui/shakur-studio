@@ -1,6 +1,6 @@
 import { Message } from './providers/providerTypes';
 import { supabase } from './supabaseClient';
-import { ResolvedPetawIntent } from './intentRouter';
+import { ResolvedPetawIntent, detectConversationLanguage } from './intentRouter';
 
 interface ChatResponse {
   text: string;
@@ -54,6 +54,47 @@ export interface GenerateImageOptions {
   count?: number;
   locale?: string;
   country?: string;
+}
+
+export interface ProviderUsageTotals {
+  requests: number;
+  tokens: number;
+  estimatedCost: number;
+}
+
+export interface ProviderModelInfo {
+  id: string;
+  displayName: string;
+  costTier: string;
+  speedTier: string;
+  qualityTier: string;
+  enabled: boolean;
+}
+
+export interface ProviderStatus {
+  provider: string;
+  enabled: boolean;
+  configured: boolean;
+  healthy: boolean;
+  lastError: string | null;
+  checkedAt: string;
+  runtimeStatus?: string;
+  cooldownUntil?: string | null;
+  failureCode?: string;
+  usage: ProviderUsageTotals;
+  models: ProviderModelInfo[];
+}
+
+export interface ProvidersStatusResponse {
+  providers: ProviderStatus[];
+  summary: {
+    total: number;
+    configured: number;
+    healthy: number;
+    degraded: number;
+    rateLimited: number;
+    quotaExhausted: number;
+  };
 }
 
 const API_URL = (import.meta.env.VITE_SHAKUROS_API_URL ?? 'http://localhost:8787').replace(/\/$/, '');
@@ -134,6 +175,23 @@ function createPayload(
 ) {
   const mode = modelId === 'auto' ? intent.modeId : modelId;
 
+  // Find the last user message to detect the language of the conversation
+  const lastUserMessage = [...messages].reverse().find((m) => m.role === 'user')?.content || '';
+  const detectedLang = detectConversationLanguage(lastUserMessage);
+
+  let finalMessages = messages;
+  if (detectedLang === 'wo') {
+    finalMessages = [
+      {
+        id: 'system-wo-prompt',
+        role: 'system',
+        content: 'Réponds en wolof, ton naturel et respectueux, sans mélanger excessivement le français sauf pour les termes techniques sans équivalent courant.',
+        timestamp: new Date().toISOString()
+      },
+      ...messages
+    ];
+  }
+
   return {
     mode: inferMode(providerId, mode),
     taskType: intent.taskType,
@@ -141,7 +199,7 @@ function createPayload(
     preferredModelId: optionalModelPreference(mode),
     requiredCapabilities: intent.requiredCapabilities,
     stream,
-    messages,
+    messages: finalMessages,
     metadata: {
       app: 'petaw-web',
       petawMode: mode,
@@ -264,6 +322,20 @@ async function chatWithoutStreaming(
   const result = await response.json() as ChatResponse;
   onProgress(result.text);
   return result.text;
+}
+
+export async function fetchProviderStatus(): Promise<ProvidersStatusResponse> {
+  const response = await fetch(`${API_URL}/v1/providers`, {
+    method: 'GET',
+    headers: await createHeaders()
+  });
+
+  if (!response.ok) {
+    const fallback = await response.json().catch(() => null) as { error?: string } | null;
+    throw new Error(fallback?.error ?? `ShakurOS providers request failed with status ${response.status}`);
+  }
+
+  return response.json() as Promise<ProvidersStatusResponse>;
 }
 
 export async function generateImageWithShakurOS(options: GenerateImageOptions): Promise<ImageGenerationResponse> {

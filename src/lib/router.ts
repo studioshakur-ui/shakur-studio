@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-export type RoutePath = '/' | '/history' | '/documents' | '/memory' | '/workspace' | '/settings' | '/profile';
+export type RoutePath = '/' | '/history' | '/documents' | '/memory' | '/workspace' | '/settings' | '/profile' | '/admin';
 
 export function useHashRoute() {
   const [hash, setHash] = useState<string>(() => window.location.hash || '#/');
@@ -27,7 +27,8 @@ export function useHashRoute() {
     cleanHash === '/memory' ||
     cleanHash === '/workspace' ||
     cleanHash === '/settings' ||
-    cleanHash === '/profile'
+    cleanHash === '/profile' ||
+    cleanHash === '/admin'
   ) {
     currentPath = cleanHash as RoutePath;
   }

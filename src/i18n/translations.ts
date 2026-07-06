@@ -7,6 +7,7 @@ export type TranslationKey =
   | 'nav.memory'
   | 'nav.workspace'
   | 'nav.settings'
+  | 'nav.admin'
   | 'settings.changeLanguage'
   | 'chat.prompt'
   | 'chat.inputPlaceholder'
@@ -27,6 +28,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     'nav.memory': 'Mémoire',
     'nav.workspace': 'Espace de travail',
     'nav.settings': 'Paramètres',
+    'nav.admin': 'Fournisseurs IA',
     'settings.changeLanguage': 'Langue',
     'chat.prompt': 'Que veux-tu faire aujourd’hui ?',
     'chat.inputPlaceholder': 'Rédiger, coder, poser une question...',
@@ -46,6 +48,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     'nav.memory': 'Memory',
     'nav.workspace': 'Workspace',
     'nav.settings': 'Settings',
+    'nav.admin': 'AI Providers',
     'settings.changeLanguage': 'Language',
     'chat.prompt': 'What would you like to do today?',
     'chat.inputPlaceholder': 'Ask a question, write code, search...',
