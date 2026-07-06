@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Globe, Moon, Sun, MessageCircle, Clock3, FileText, Database, PanelsTopLeft, Settings, LogOut, User } from 'lucide-react';
+import { Menu, X, Globe, Moon, Sun, MessageCircle, Clock3, FileText, Database, PanelsTopLeft, Settings, LogOut, User, PanelLeftClose, PanelLeftOpen, Shield } from 'lucide-react';
 import { RoutePath } from '../lib/router';
 import { Language } from '../i18n/translations';
 import { translate } from '../i18n/config';
@@ -31,6 +31,8 @@ export function Layout({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userContext, setUserContext] = useState<UserContext | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => window.localStorage.getItem('petaw-sidebar-collapsed') === 'true');
+  const [isAdminMode, setIsAdminMode] = useState<boolean>(() => window.localStorage.getItem('petaw-admin-mode') === 'true');
 
   const t = (key: Parameters<typeof translate>[1]) => translate(language, key);
 
@@ -56,6 +58,14 @@ export function Layout({
     return () => window.removeEventListener('petaw_profile_updated', handleProfileUpdate);
   }, [session]);
 
+  useEffect(() => {
+    window.localStorage.setItem('petaw-sidebar-collapsed', String(isSidebarCollapsed));
+  }, [isSidebarCollapsed]);
+
+  useEffect(() => {
+    window.localStorage.setItem('petaw-admin-mode', String(isAdminMode));
+  }, [isAdminMode]);
+
   const completeness = userContext ? userUnderstandingService.calculateCompleteness(userContext, session?.user?.email || '') : 0;
 
   const getInitials = () => {
@@ -75,9 +85,12 @@ export function Layout({
     return session?.user?.email?.split('@')[0] || 'Hamidou Maiga';
   };
 
-  const navItems = [
+  const primaryNavItems = [
     { path: '/' as RoutePath, label: t('nav.chat'), icon: MessageCircle },
-    { path: '/history' as RoutePath, label: t('nav.history'), icon: Clock3 },
+    { path: '/history' as RoutePath, label: t('nav.history'), icon: Clock3 }
+  ];
+
+  const adminNavItems = [
     { path: '/documents' as RoutePath, label: t('nav.documents'), icon: FileText },
     { path: '/memory' as RoutePath, label: t('nav.memory'), icon: Database },
     { path: '/workspace' as RoutePath, label: t('nav.workspace'), icon: PanelsTopLeft },
@@ -92,13 +105,24 @@ export function Layout({
   return (
     <div className="petaw-layout">
       {/* Desktop Sidebar */}
-      <aside className="petaw-sidebar">
-        <div className="petaw-sidebar__brand" onClick={() => handleNavClick('/')}>
-          <span className="brand-name">PETAW</span>
+      <aside className={`petaw-sidebar ${isSidebarCollapsed ? 'is-collapsed' : ''}`}>
+        <div className="petaw-sidebar__topbar">
+          <div className="petaw-sidebar__brand" onClick={() => handleNavClick('/')}>
+            <span className="brand-name">P<span className="brand-diaeresis">Ë</span>TAW</span>
+          </div>
+          <button
+            type="button"
+            className="petaw-sidebar__collapse-btn"
+            onClick={() => setIsSidebarCollapsed((current) => !current)}
+            aria-label={isSidebarCollapsed ? 'Ouvrir la navigation' : 'Réduire la navigation'}
+            title={isSidebarCollapsed ? 'Ouvrir la navigation' : 'Réduire la navigation'}
+          >
+            {isSidebarCollapsed ? <PanelLeftOpen size={16} /> : <PanelLeftClose size={16} />}
+          </button>
         </div>
 
         <nav className="petaw-sidebar__nav">
-          {navItems.map((item) => {
+          {primaryNavItems.map((item) => {
             const isActive = currentPath === item.path;
             const Icon = item.icon;
             return (
@@ -107,12 +131,35 @@ export function Layout({
                 onClick={() => handleNavClick(item.path)}
                 className={`petaw-sidebar__nav-item ${isActive ? 'active' : ''}`}
                 role="link"
+                title={item.label}
               >
                 <Icon size={15} />
                 <span className="nav-label">{item.label}</span>
               </button>
             );
           })}
+
+          {isAdminMode && (
+            <div className="petaw-sidebar__admin-group">
+              <span className="petaw-sidebar__section-label">Admin</span>
+              {adminNavItems.map((item) => {
+                const isActive = currentPath === item.path;
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={item.path}
+                    onClick={() => handleNavClick(item.path)}
+                    className={`petaw-sidebar__nav-item ${isActive ? 'active' : ''}`}
+                    role="link"
+                    title={item.label}
+                  >
+                    <Icon size={15} />
+                    <span className="nav-label">{item.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </nav>
 
         <div className="petaw-sidebar__footer">
@@ -144,6 +191,10 @@ export function Layout({
                 <div className="profile-dropdown-menu-warm">
                   <button onClick={() => { handleNavClick('/profile'); setIsMenuOpen(false); }} className="dropdown-item-btn-warm">
                     {language === 'fr' ? 'Profil' : 'Profile'}
+                  </button>
+                  <button onClick={() => setIsAdminMode((current) => !current)} className="dropdown-item-btn-warm">
+                    <Shield size={12} />
+                    <span>{isAdminMode ? (language === 'fr' ? 'Quitter le mode admin' : 'Exit admin mode') : (language === 'fr' ? 'Mode admin' : 'Admin mode')}</span>
                   </button>
                   <button onClick={() => { handleNavClick('/settings'); setIsMenuOpen(false); }} className="dropdown-item-btn-warm">
                     {language === 'fr' ? 'Préférences API' : 'API Preferences'}
@@ -188,7 +239,7 @@ export function Layout({
       {/* Mobile Top Navbar */}
       <header className="petaw-mobile-header">
         <div className="petaw-mobile-header__brand" onClick={() => handleNavClick('/')}>
-          <span className="brand-name">PETAW</span>
+          <span className="brand-name">P<span className="brand-diaeresis">Ë</span>TAW</span>
         </div>
         <button
           className="petaw-mobile-header__toggle"
@@ -203,13 +254,26 @@ export function Layout({
       {isMobileMenuOpen && (
         <div className="petaw-mobile-drawer">
           <nav className="petaw-mobile-drawer__nav">
-            {navItems.map((item) => {
+            {primaryNavItems.map((item) => {
               const isActive = currentPath === item.path;
               return (
                 <button
                   key={item.path}
                   onClick={() => handleNavClick(item.path)}
                   className={`petaw-mobile-drawer__nav-item ${isActive ? 'active' : ''}`}
+                >
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+
+            {isAdminMode && adminNavItems.map((item) => {
+              const isActive = currentPath === item.path;
+              return (
+                <button
+                  key={item.path}
+                  onClick={() => handleNavClick(item.path)}
+                  className={`petaw-mobile-drawer__nav-item admin ${isActive ? 'active' : ''}`}
                 >
                   <span>{item.label}</span>
                 </button>
@@ -230,6 +294,13 @@ export function Layout({
             >
               {theme === 'dark' ? <Sun size={15} /> : <Moon size={15} />}
               <span>{theme === 'dark' ? 'Light' : 'Dark'}</span>
+            </button>
+            <button
+              onClick={() => setIsAdminMode((current) => !current)}
+              className="footer-control-btn"
+            >
+              <Shield size={15} />
+              <span>{isAdminMode ? (language === 'fr' ? 'Quitter admin' : 'Exit admin') : (language === 'fr' ? 'Mode admin' : 'Admin mode')}</span>
             </button>
             <button
               onClick={() => handleNavClick('/profile')}

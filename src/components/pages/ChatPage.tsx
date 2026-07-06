@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Globe, Trash2, StopCircle, RefreshCw, PenLine, FileText, Scale, GraduationCap } from 'lucide-react';
+import { Send, Globe, Trash2, StopCircle, RefreshCw, PenLine, Camera, Mic, Search, Briefcase, Brain, Sparkles, BookOpenCheck } from 'lucide-react';
 import { ModelSelector } from '../chat/ModelSelector';
 import { MessageList } from '../chat/MessageList';
 import { ShakurOS, Conversation } from '../../lib/shakurOS';
@@ -9,6 +9,7 @@ import { translate } from '../../i18n/config';
 import { Language } from '../../i18n/translations';
 import { Session } from '@supabase/supabase-js';
 import { userUnderstandingService, UserContext } from '../../lib/userUnderstandingService';
+import { PetawIntentId, PetawIntentPreset, PetawModeId, resolvePetawIntent, ShakurTaskType } from '../../lib/intentRouter';
 
 interface ChatPageProps {
   language: Language;
@@ -16,6 +17,194 @@ interface ChatPageProps {
   activeChat: Conversation | null;
   onResetActiveChat: () => void;
   session: Session | null;
+}
+
+interface SuggestionAction {
+  id: PetawIntentId;
+  title: string;
+  description: string;
+  prompt: string;
+  icon: React.ComponentType<{ size?: number }>;
+  accent: 'gold' | 'copper' | 'pearl' | 'sage';
+  modeId: PetawModeId;
+  taskType: ShakurTaskType;
+  enableWebSearch?: boolean;
+}
+
+function buildAdaptiveActions(language: Language, isEvening: boolean, hasProfile: boolean): SuggestionAction[] {
+  const actions: SuggestionAction[] = language === 'fr'
+    ? [
+        {
+          id: 'ask',
+          title: isEvening ? 'Clarifier une idée' : 'Poser une question',
+          description: isEvening ? 'Démêle vite un sujet avant de finir la journée.' : 'Une réponse nette, directe et contextualisée.',
+          prompt: isEvening ? 'Aide-moi à clarifier cette idée étape par étape.' : 'J’ai une question précise et je veux une réponse claire.',
+          icon: Sparkles,
+          accent: 'gold',
+          modeId: 'auto',
+          taskType: 'general'
+        },
+        {
+          id: 'capture',
+          title: 'Capturer et comprendre',
+          description: 'Photo, document ou capture: explique, résume, extrait.',
+          prompt: 'Je vais envoyer une photo ou un document. Prépare-toi à l’analyser clairement.',
+          icon: Camera,
+          accent: 'pearl',
+          modeId: 'premium',
+          taskType: 'document'
+        },
+        {
+          id: 'search',
+          title: 'Recherche en direct',
+          description: 'Trouve des infos récentes et synthétise le vrai signal.',
+          prompt: 'Fais une recherche web et donne-moi une synthèse fiable et courte.',
+          icon: Search,
+          accent: 'sage',
+          enableWebSearch: true,
+          modeId: 'fast',
+          taskType: 'general'
+        },
+        {
+          id: 'write',
+          title: 'Écrire pour moi',
+          description: 'Message, mail, post ou texte déjà bien formulé.',
+          prompt: 'Rédige un texte utile, propre et prêt à envoyer.',
+          icon: PenLine,
+          accent: 'copper',
+          modeId: 'premium',
+          taskType: 'writing'
+        },
+        {
+          id: 'study',
+          title: 'Apprendre vite',
+          description: 'Explique comme un coach, avec étapes et mini quiz.',
+          prompt: 'Explique-moi ce sujet simplement puis teste ma compréhension.',
+          icon: BookOpenCheck,
+          accent: 'gold',
+          modeId: 'premium',
+          taskType: 'education'
+        },
+        {
+          id: 'work',
+          title: 'Mode travail',
+          description: 'Décision, résumé, devis, plan d’action, argumentaire.',
+          prompt: 'Aide-moi à produire un résultat concret pour le travail.',
+          icon: Briefcase,
+          accent: 'pearl',
+          modeId: 'premium',
+          taskType: 'reasoning'
+        },
+        {
+          id: 'voice',
+          title: 'Pensée vocale',
+          description: 'Parle naturellement, PËTAW structure ensuite.',
+          prompt: 'Je vais te dicter une idée brute. Structure-la proprement.',
+          icon: Mic,
+          accent: 'sage',
+          modeId: 'fast',
+          taskType: 'general'
+        },
+        {
+          id: 'memory',
+          title: hasProfile ? 'Mémoire personnelle' : 'Mieux me connaître',
+          description: hasProfile ? 'Reprends mon contexte et avance sans repartir de zéro.' : 'Construisons un contexte personnel utile pour mieux t’aider.',
+          prompt: hasProfile ? 'Reprends ce que tu sais déjà de moi et aide-moi à avancer.' : 'Aide-moi à construire mon profil d’usage étape par étape.',
+          icon: Brain,
+          accent: 'copper',
+          modeId: 'auto',
+          taskType: 'reasoning'
+        }
+      ]
+    : [
+        {
+          id: 'ask',
+          title: isEvening ? 'Untangle an idea' : 'Ask anything',
+          description: isEvening ? 'Get clarity quickly before ending your day.' : 'A direct, clean, contextual answer.',
+          prompt: isEvening ? 'Help me untangle this idea step by step.' : 'I have a precise question and want a clear answer.',
+          icon: Sparkles,
+          accent: 'gold',
+          modeId: 'auto',
+          taskType: 'general'
+        },
+        {
+          id: 'capture',
+          title: 'Capture and understand',
+          description: 'Photo, document, screenshot: explain, summarize, extract.',
+          prompt: 'I am about to send a photo or document. Be ready to analyze it clearly.',
+          icon: Camera,
+          accent: 'pearl',
+          modeId: 'premium',
+          taskType: 'document'
+        },
+        {
+          id: 'search',
+          title: 'Live search',
+          description: 'Find fresh information and compress the real signal.',
+          prompt: 'Search the web and give me a short reliable synthesis.',
+          icon: Search,
+          accent: 'sage',
+          enableWebSearch: true,
+          modeId: 'fast',
+          taskType: 'general'
+        },
+        {
+          id: 'write',
+          title: 'Write for me',
+          description: 'Message, email, post, or text ready to send.',
+          prompt: 'Write something useful, polished, and ready to send.',
+          icon: PenLine,
+          accent: 'copper',
+          modeId: 'premium',
+          taskType: 'writing'
+        },
+        {
+          id: 'study',
+          title: 'Learn faster',
+          description: 'Explain like a coach, then test me briefly.',
+          prompt: 'Teach me this simply, then test my understanding.',
+          icon: BookOpenCheck,
+          accent: 'gold',
+          modeId: 'premium',
+          taskType: 'education'
+        },
+        {
+          id: 'work',
+          title: 'Work mode',
+          description: 'Decision prep, summary, quote, plan, argument, brief.',
+          prompt: 'Help me produce a concrete result for work.',
+          icon: Briefcase,
+          accent: 'pearl',
+          modeId: 'premium',
+          taskType: 'reasoning'
+        },
+        {
+          id: 'voice',
+          title: 'Voice thought',
+          description: 'Speak naturally, PËTAW structures it afterwards.',
+          prompt: 'I am about to dictate a raw idea. Structure it clearly.',
+          icon: Mic,
+          accent: 'sage',
+          modeId: 'fast',
+          taskType: 'general'
+        },
+        {
+          id: 'memory',
+          title: hasProfile ? 'Personal memory' : 'Know me better',
+          description: hasProfile ? 'Resume from my context instead of restarting.' : 'Let’s build useful personal context to help me better.',
+          prompt: hasProfile ? 'Resume from what you already know about me and help me move forward.' : 'Help me build my usage profile step by step.',
+          icon: Brain,
+          accent: 'copper',
+          modeId: 'auto',
+          taskType: 'reasoning'
+        }
+      ];
+
+  const priority: PetawIntentId[] = isEvening
+    ? ['ask', 'work', 'memory', 'write', 'study', 'search', 'capture', 'voice']
+    : ['ask', 'capture', 'search', 'study', 'work', 'write', 'voice', 'memory'];
+
+  return [...actions].sort((left, right) => priority.indexOf(left.id) - priority.indexOf(right.id));
 }
 
 export function ChatPage({ language, navigate, activeChat, onResetActiveChat, session }: ChatPageProps) {
@@ -27,6 +216,7 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat, se
   const [input, setInput] = useState('');
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [selectedPreset, setSelectedPreset] = useState<PetawIntentPreset | null>(null);
   
   const [currentChat, setCurrentChat] = useState<Conversation | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -81,6 +271,7 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat, se
   const handleModelChange = (pId: string, mId: string) => {
     setProviderId(pId);
     setModelId(mId);
+    setSelectedPreset((current) => current ? { ...current, modeId: mId as PetawModeId } : current);
   };
 
   const getGreeting = () => {
@@ -110,6 +301,16 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat, se
     const userMessageText = input.trim();
     setInput('');
     setIsStreaming(true);
+    const resolvedIntent = resolvePetawIntent({
+      text: userMessageText,
+      messages: currentChat?.messages ?? [],
+      webSearchEnabled,
+      preset: selectedPreset ?? undefined
+    });
+
+    if (providerId === 'auto') {
+      setModelId(resolvedIntent.modeId);
+    }
 
     const userMsg: Message = {
       id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 9),
@@ -157,7 +358,7 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat, se
     try {
       await ShakurOS.chat(
         providerId,
-        modelId,
+        providerId === 'auto' ? resolvedIntent.modeId : modelId,
         chat.messages,
         webSearchEnabled,
         (progressText) => {
@@ -175,7 +376,8 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat, se
             ShakurOS.saveConversation(finalChat);
             return finalChat;
           });
-        }
+        },
+        resolvedIntent
       );
     } catch (err) {
       console.error(err);
@@ -193,6 +395,7 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat, se
       });
     } finally {
       setIsStreaming(false);
+      setSelectedPreset(null);
       setTimeout(() => textareaRef.current?.focus(), 50);
     }
   };
@@ -209,6 +412,9 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat, se
     setInput('');
     setWebSearchEnabled(false);
     setIsStreaming(false);
+    setSelectedPreset(null);
+    setProviderId('auto');
+    setModelId('auto');
     setTimeout(() => textareaRef.current?.focus(), 50);
   };
 
@@ -222,6 +428,33 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat, se
   const isChatEmpty = !currentChat || currentChat.messages.length === 0;
   const completeness = userContext ? userUnderstandingService.calculateCompleteness(userContext, session?.user?.email || '') : 0;
   const isProfileIncomplete = completeness < 100;
+  const currentHour = new Date().getHours();
+  const isEvening = currentHour >= 18;
+  const adaptiveActions = buildAdaptiveActions(language, isEvening, Boolean(userContext?.firstName || userContext?.lastName || session?.user?.email));
+  const highlightedAction = selectedPreset
+    ? adaptiveActions.find((action) => action.id === selectedPreset.id) ?? adaptiveActions[0]
+    : adaptiveActions[0];
+
+  const handleActionSelect = (action: SuggestionAction) => {
+    const preset: PetawIntentPreset = {
+      id: action.id,
+      modeId: action.modeId,
+      taskType: action.taskType,
+      requiredCapabilities: ['chat'],
+      webSearchEnabled: action.enableWebSearch,
+      metadata: {
+        source: 'adaptive-action',
+        adaptiveActionId: action.id
+      }
+    };
+
+    setSelectedPreset(preset);
+    setInput(action.prompt);
+    setWebSearchEnabled(Boolean(action.enableWebSearch));
+    setProviderId('auto');
+    setModelId(action.modeId);
+    setTimeout(() => textareaRef.current?.focus(), 50);
+  };
 
   return (
     <div className="chat-container-warm">
@@ -255,12 +488,36 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat, se
       <div className={`chat-viewport-warm ${isChatEmpty ? 'is-empty' : 'has-messages'}`}>
         {isChatEmpty ? (
           <div className="chat-greeting-view-warm">
+            <div className="greeting-brand-kicker-warm">
+              <span className="greeting-brand-mark-warm">P<span className="brand-diaeresis">Ë</span>TAW</span>
+              <span className="greeting-brand-copy-warm">
+                {language === 'fr' ? 'Assistant personnel vivant' : 'Living personal assistant'}
+              </span>
+            </div>
             <h1 className="greeting-title-warm">
               {getGreeting()}
             </h1>
             <p className="greeting-subtitle-warm">
               {language === 'fr' ? "Que souhaites-tu accomplir aujourd'hui ?" : "What do you wish to accomplish today?"}
             </p>
+            <p className="greeting-manifesto-warm">
+              {language === 'fr'
+                ? "Écris, parle, capture, cherche, apprends ou produis un résultat concret. PËTAW adapte son mode à ton moment."
+                : "Write, speak, capture, search, learn, or produce something concrete. PËTAW adapts its mode to your moment."}
+            </p>
+            <div className="landing-routing-preview-warm">
+              <span className="routing-preview-label-warm">
+                {language === 'fr' ? 'Mode en avant' : 'Featured mode'}
+              </span>
+              <div className="routing-preview-track-warm">
+                <span className="routing-preview-pill-warm">{highlightedAction.title}</span>
+                <span className="routing-preview-meta-warm">
+                  {language === 'fr'
+                    ? `Routage ${highlightedAction.modeId} • tâche ${highlightedAction.taskType}`
+                    : `${highlightedAction.modeId} routing • ${highlightedAction.taskType} task`}
+                </span>
+              </div>
+            </div>
           </div>
         ) : (
           <MessageList messages={currentChat.messages} isStreaming={isStreaming} />
@@ -325,78 +582,40 @@ export function ChatPage({ language, navigate, activeChat, onResetActiveChat, se
 
           {input.trim() === '' && isChatEmpty && (
             <div className="suggestions-container-warm">
+              <div className="suggestions-header-warm">
+                <span className="suggestions-eyebrow-warm">
+                  {language === 'fr' ? 'Modes adaptatifs' : 'Adaptive modes'}
+                </span>
+                <p className="suggestions-heading-warm">
+                  {language === 'fr'
+                    ? "Huit façons d’utiliser PËTAW, réordonnées selon ton contexte."
+                    : "Eight ways to use PËTAW, reordered for your context."}
+                </p>
+              </div>
               <div className="input-suggestions-grid-warm">
-                <button
-                  type="button"
-                  onClick={() => setInput(language === 'fr' ? 'Écrire un texte' : 'Write a text')}
-                  className="suggestion-card-warm"
-                >
-                  <div className="suggestion-card-icon-warm">
-                    <PenLine size={20} />
-                  </div>
-                  <div className="suggestion-card-content-warm">
-                    <span className="suggestion-card-title-warm">
-                      {language === 'fr' ? 'Écrire un texte' : 'Write a text'}
-                    </span>
-                    <span className="suggestion-card-desc-warm">
-                      {language === 'fr' ? 'Rédiger, reformuler, structurer.' : 'Write, rephrase, structure.'}
-                    </span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setInput(language === 'fr' ? 'Analyser un document' : 'Analyze a document')}
-                  className="suggestion-card-warm"
-                >
-                  <div className="suggestion-card-icon-warm">
-                    <FileText size={20} />
-                  </div>
-                  <div className="suggestion-card-content-warm">
-                    <span className="suggestion-card-title-warm">
-                      {language === 'fr' ? 'Analyser un document' : 'Analyze a document'}
-                    </span>
-                    <span className="suggestion-card-desc-warm">
-                      {language === 'fr' ? 'Comprendre, résumer, extraire.' : 'Understand, summarize, extract.'}
-                    </span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setInput(language === 'fr' ? 'Préparer une décision' : 'Prepare a decision')}
-                  className="suggestion-card-warm"
-                >
-                  <div className="suggestion-card-icon-warm">
-                    <Scale size={20} />
-                  </div>
-                  <div className="suggestion-card-content-warm">
-                    <span className="suggestion-card-title-warm">
-                      {language === 'fr' ? 'Préparer une décision' : 'Prepare a decision'}
-                    </span>
-                    <span className="suggestion-card-desc-warm">
-                      {language === 'fr' ? 'Comparer, évaluer, recommander.' : 'Compare, evaluate, recommend.'}
-                    </span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setInput(language === 'fr' ? 'Apprendre quelque chose' : 'Learn something')}
-                  className="suggestion-card-warm"
-                >
-                  <div className="suggestion-card-icon-warm">
-                    <GraduationCap size={20} />
-                  </div>
-                  <div className="suggestion-card-content-warm">
-                    <span className="suggestion-card-title-warm">
-                      {language === 'fr' ? 'Apprendre quelque chose' : 'Learn something'}
-                    </span>
-                    <span className="suggestion-card-desc-warm">
-                      {language === 'fr' ? 'Expliquer, enseigner, comprendre.' : 'Explain, teach, understand.'}
-                    </span>
-                  </div>
-                </button>
+                {adaptiveActions.map((action) => {
+                  const Icon = action.icon;
+                  return (
+                    <button
+                      key={action.id}
+                      type="button"
+                      onClick={() => handleActionSelect(action)}
+                      className={`suggestion-card-warm accent-${action.accent} ${selectedPreset?.id === action.id ? 'is-selected' : ''}`}
+                    >
+                      <div className="suggestion-card-icon-warm">
+                        <Icon size={20} />
+                      </div>
+                      <div className="suggestion-card-content-warm">
+                        <span className="suggestion-card-title-warm">
+                          {action.title}
+                        </span>
+                        <span className="suggestion-card-desc-warm">
+                          {action.description}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Profile incompleteness warning banner placed under suggestions */}

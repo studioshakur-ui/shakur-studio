@@ -18,7 +18,7 @@ export function BrandMark({ size = 28, className }: BrandMarkProps) {
       xmlns="http://www.w3.org/2000/svg"
       className={className}
       role="img"
-      aria-label="PETAW"
+      aria-label="PËTAW"
     >
       <defs>
         <linearGradient id={gradientId} x1="12" y1="8" x2="52" y2="56" gradientUnits="userSpaceOnUse">
@@ -47,4 +47,3 @@ export function BrandMark({ size = 28, className }: BrandMarkProps) {
     </svg>
   );
 }
-

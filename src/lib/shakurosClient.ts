@@ -1,5 +1,6 @@
 import { Message } from './providers/providerTypes';
 import { supabase } from './supabaseClient';
+import { ResolvedPetawIntent } from './intentRouter';
 
 interface ChatResponse {
   text: string;
@@ -14,11 +15,30 @@ interface StreamEvent {
   data: unknown;
 }
 
-const API_URL = (import.meta.env.VITE_SHAKUROS_API_URL ?? 'http://localhost:8787').replace(/\/$/, '');
+type RoutingMode = 'auto' | 'cheap' | 'balanced' | 'premium' | 'local';
 
-function inferMode(providerId: string, modelId: string): 'auto' | 'cheap' | 'balanced' | 'premium' | 'local' {
+const API_URL = (import.meta.env.VITE_SHAKUROS_API_URL ?? 'http://localhost:8787').replace(/\/$/, '');
+const PETAW_MODE_IDS = new Set(['auto', 'fast', 'economy', 'premium', 'local']);
+
+function inferMode(providerId: string, modelId: string): RoutingMode {
   if (providerId === 'auto' || modelId === 'auto') {
     return 'auto';
+  }
+
+  if (modelId === 'fast') {
+    return 'balanced';
+  }
+
+  if (modelId === 'economy') {
+    return 'cheap';
+  }
+
+  if (modelId === 'premium') {
+    return 'premium';
+  }
+
+  if (modelId === 'local') {
+    return 'local';
   }
 
   if (providerId === 'ollama' || modelId.includes('local')) {
@@ -36,8 +56,12 @@ function inferMode(providerId: string, modelId: string): 'auto' | 'cheap' | 'bal
   return 'balanced';
 }
 
-function optionalPreference(value: string): string | undefined {
-  return value === 'auto' ? undefined : value;
+function optionalProviderPreference(providerId: string): string | undefined {
+  return providerId === 'auto' ? undefined : providerId;
+}
+
+function optionalModelPreference(modelId: string): string | undefined {
+  return PETAW_MODE_IDS.has(modelId) ? undefined : modelId;
 }
 
 async function getAccessToken(): Promise<string> {
@@ -65,18 +89,27 @@ function createPayload(
   providerId: string,
   modelId: string,
   messages: Message[],
-  _webSearchEnabled: boolean,
-  stream: boolean
+  webSearchEnabled: boolean,
+  stream: boolean,
+  intent: ResolvedPetawIntent
 ) {
+  const mode = modelId === 'auto' ? intent.modeId : modelId;
+
   return {
-    mode: inferMode(providerId, modelId),
-    preferredProviderId: optionalPreference(providerId),
-    preferredModelId: optionalPreference(modelId),
-    requiredCapabilities: ['chat'],
+    mode: inferMode(providerId, mode),
+    taskType: intent.taskType,
+    preferredProviderId: optionalProviderPreference(providerId),
+    preferredModelId: optionalModelPreference(mode),
+    requiredCapabilities: intent.requiredCapabilities,
     stream,
     messages,
     metadata: {
-      app: 'petaw-web'
+      app: 'petaw-web',
+      petawMode: mode,
+      petawIntent: intent.id,
+      petawIntentConfidence: intent.confidence,
+      webSearchRequested: webSearchEnabled,
+      ...intent.metadata
     }
   };
 }
@@ -110,9 +143,10 @@ export async function chatWithShakurOS(
   modelId: string,
   messages: Message[],
   webSearchEnabled: boolean,
-  onProgress: (text: string) => void
+  onProgress: (text: string) => void,
+  intent: ResolvedPetawIntent
 ): Promise<string> {
-  return chatWithoutStreaming(providerId, modelId, messages, webSearchEnabled, onProgress);
+  return chatWithoutStreaming(providerId, modelId, messages, webSearchEnabled, onProgress, intent);
 }
 
 export async function streamChatWithShakurOS(
@@ -120,12 +154,13 @@ export async function streamChatWithShakurOS(
   modelId: string,
   messages: Message[],
   webSearchEnabled: boolean,
-  onProgress: (text: string) => void
+  onProgress: (text: string) => void,
+  intent: ResolvedPetawIntent
 ): Promise<string> {
   const response = await fetch(`${API_URL}/v1/chat`, {
     method: 'POST',
     headers: await createHeaders(),
-    body: JSON.stringify(createPayload(providerId, modelId, messages, webSearchEnabled, true))
+    body: JSON.stringify(createPayload(providerId, modelId, messages, webSearchEnabled, true, intent))
   });
 
   if (!response.ok) {
@@ -134,7 +169,7 @@ export async function streamChatWithShakurOS(
   }
 
   if (!response.body) {
-    return chatWithoutStreaming(providerId, modelId, messages, webSearchEnabled, onProgress);
+    return chatWithoutStreaming(providerId, modelId, messages, webSearchEnabled, onProgress, intent);
   }
 
   const reader = response.body.getReader();
@@ -173,12 +208,13 @@ async function chatWithoutStreaming(
   modelId: string,
   messages: Message[],
   webSearchEnabled: boolean,
-  onProgress: (text: string) => void
+  onProgress: (text: string) => void,
+  intent: ResolvedPetawIntent
 ): Promise<string> {
   const response = await fetch(`${API_URL}/v1/chat`, {
     method: 'POST',
     headers: await createHeaders(),
-    body: JSON.stringify(createPayload(providerId, modelId, messages, webSearchEnabled, false))
+    body: JSON.stringify(createPayload(providerId, modelId, messages, webSearchEnabled, false, intent))
   });
 
   if (!response.ok) {

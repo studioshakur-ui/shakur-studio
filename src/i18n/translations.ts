@@ -35,7 +35,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     'chat.action.upload.title': 'Importer un document',
     'chat.action.search.title': 'Faire une recherche',
     'chat.action.continue.title': 'Continuer un projet',
-    'a11y.brand': 'PETAW',
+    'a11y.brand': 'PËTAW',
     'a11y.nav': 'Navigation',
     'a11y.language': 'Langue'
   },
@@ -54,7 +54,7 @@ export const translations: Record<Language, Record<TranslationKey, string>> = {
     'chat.action.upload.title': 'Upload document',
     'chat.action.search.title': 'Search web',
     'chat.action.continue.title': 'Continue project',
-    'a11y.brand': 'PETAW',
+    'a11y.brand': 'PËTAW',
     'a11y.nav': 'Navigation',
     'a11y.language': 'Language'
   }

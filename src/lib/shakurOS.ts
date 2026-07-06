@@ -1,5 +1,6 @@
 import { Message } from './providers/providerTypes';
 import { chatWithShakurOS } from './shakurosClient';
+import { ResolvedPetawIntent } from './intentRouter';
 
 export interface Conversation {
   id: string;
@@ -216,8 +217,9 @@ export class ShakurOS {
     modelId: string,
     messages: Message[],
     webSearchEnabled: boolean,
-    onProgress: (chunk: string) => void
+    onProgress: (chunk: string) => void,
+    intent: ResolvedPetawIntent
   ): Promise<string> {
-    return chatWithShakurOS(providerId, modelId, messages, webSearchEnabled, onProgress);
+    return chatWithShakurOS(providerId, modelId, messages, webSearchEnabled, onProgress, intent);
   }
 }
