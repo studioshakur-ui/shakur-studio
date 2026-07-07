@@ -241,24 +241,35 @@ const TEMPORAL_CORRECTION_MARKERS = [
   'we are in', 'it is currently', "it's currently", 'today is'
 ];
 
+const FRESHNESS_CONTEST_MARKERS = [
+  "c'est à jour", "c'est a jour", "cest a jour", "is this up to date", "up-to-date",
+  "es-tu sûr", "es tu sur", "es-tu sure", "es tu sure", "are you sure",
+  "vérifie encore", "verifie encore", "double check",
+  "plus récent que ça", "plus recent que ca", "plus récent que cela", "plus recent que cela", "more recent"
+];
+
 function mentionsYear(text: string): boolean {
   return /\b(19|20)\d{2}\b/.test(text);
 }
 
-// A bare date correction like "on est en juillet 2026" carries no subject of
-// its own — it only makes sense as a correction to an earlier real-time
-// question in the same conversation (e.g. "qui est le président de
-// l'assemblée"). Detecting it lets us re-run the search instead of letting
-// the model answer the correction from its own (possibly stale) training
-// knowledge, which can silently contradict the answer already given earlier
-// in the same conversation.
-function isTemporalCorrection(text: string): boolean {
+function requiresFreshData(text: string): boolean {
   const normalized = stripAccents(text.toLowerCase());
-  return mentionsYear(normalized) && TEMPORAL_CORRECTION_MARKERS.some((marker) => normalized.includes(stripAccents(marker)));
+  const isTemporalCorrection = mentionsYear(normalized) &&
+    TEMPORAL_CORRECTION_MARKERS.some((marker) => normalized.includes(stripAccents(marker)));
+  
+  if (isTemporalCorrection) {
+    return true;
+  }
+
+  return FRESHNESS_CONTEST_MARKERS.some((marker) => normalized.includes(stripAccents(marker)));
 }
 
-function findEarlierRealtimeQuery(messages: Message[]): Message | undefined {
-  return [...messages].reverse().find((message) => message.role === 'user' && detectRealtimeQuery(message.content.toLowerCase()));
+function findEarlierSubstantialQuery(messages: Message[]): Message | undefined {
+  return [...messages].reverse().find((message) => {
+    if (message.role !== 'user') return false;
+    const content = message.content.toLowerCase();
+    return !requiresFreshData(content);
+  });
 }
 
 export function resolvePetawIntent(options: ResolveIntentOptions): ResolvedPetawIntent {
@@ -294,19 +305,32 @@ export function resolvePetawIntent(options: ResolveIntentOptions): ResolvedPetaw
     };
   }
 
-  if (isTemporalCorrection(latestUserText)) {
-    const earlierRealtimeQuery = findEarlierRealtimeQuery(options.messages);
-    if (earlierRealtimeQuery) {
+  if (requiresFreshData(latestUserText)) {
+    const earlierSubstantialQuery = findEarlierSubstantialQuery(options.messages);
+    if (earlierSubstantialQuery) {
+      const cleanEarlier = earlierSubstantialQuery.content.trim();
+      const cleanFollowup = options.text.trim();
+      let query = '';
+      if (mentionsYear(cleanFollowup)) {
+        query = `${cleanEarlier} ${cleanFollowup}`;
+      } else {
+        const date = new Date();
+        const monthsFr = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+        const currentMonth = monthsFr[date.getMonth()] || 'juillet';
+        const currentYear = date.getFullYear() || 2026;
+        query = `${cleanEarlier} ${currentMonth} ${currentYear}`;
+      }
+
       return {
         id: 'search',
         modeId: 'fast',
         taskType: 'general',
         requiredCapabilities: ['chat'],
         webSearchEnabled: true,
-        confidence: 0.88,
+        confidence: 0.9,
         metadata: {
-          source: 'temporal_correction_followup',
-          query: `${earlierRealtimeQuery.content} (${options.text.trim()})`
+          source: 'freshness_contest_followup',
+          query
         }
       };
     }
