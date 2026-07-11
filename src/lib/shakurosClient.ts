@@ -59,6 +59,16 @@ interface ChatOrchestrationToolTrace {
   };
 }
 
+interface ChatOrchestrationResearch {
+  needed: boolean;
+  sourcesCount: number;
+  status: 'skipped' | 'success' | 'failed';
+}
+
+interface ChatOrchestrationCritic {
+  status: 'passed' | 'warned' | 'blocked';
+}
+
 interface ChatOrchestration {
   tools?: ChatOrchestrationToolTrace;
   document?: {
@@ -74,6 +84,8 @@ interface ChatOrchestration {
       }>;
     };
   };
+  research?: ChatOrchestrationResearch;
+  critic?: ChatOrchestrationCritic;
 }
 
 export interface ChatCompletion {
@@ -110,6 +122,8 @@ export interface ChatCompletion {
       }>;
     };
     actions?: ChatOrchestrationToolAction[];
+    research?: ChatOrchestrationResearch;
+    critic?: ChatOrchestrationCritic;
   };
 }
 
@@ -776,6 +790,8 @@ function buildRoutingTrace(
           }))
       }
       : undefined,
-    actions: orchestration?.tools?.actions
+    actions: orchestration?.tools?.actions,
+    research: orchestration?.research,
+    critic: orchestration?.critic
   };
 }

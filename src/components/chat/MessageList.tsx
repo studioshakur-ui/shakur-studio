@@ -367,7 +367,11 @@ export function MessageList({ messages, isStreaming, isSearching, language, work
     }
 
     const hasDocumentSupport = Boolean(msg.routingTrace?.documentRetrieval?.selectedChunks?.length);
-    const hasWebSources = extractMarkdownLinks(msg.content).length > 0;
+    const sourcesCount = extractMarkdownLinks(msg.content).length;
+    const hasWebSources = sourcesCount > 0;
+    // Only surface a "verified" signal when the critic actually had something to check
+    // (research or document grounding) and passed cleanly — never as decoration.
+    const wasVerified = msg.routingTrace?.critic?.status === 'passed' && (hasDocumentSupport || hasWebSources);
     if (!hasDocumentSupport && !hasWebSources) {
       return null;
     }
@@ -381,7 +385,14 @@ export function MessageList({ messages, isStreaming, isSearching, language, work
         ) : null}
         {hasWebSources ? (
           <span className="message-signal-pill-warm is-web">
-            {language === 'fr' ? 'Sources web' : 'Web sources'}
+            {language === 'fr'
+              ? `${sourcesCount} source${sourcesCount > 1 ? 's' : ''} web`
+              : `${sourcesCount} web source${sourcesCount > 1 ? 's' : ''}`}
+          </span>
+        ) : null}
+        {wasVerified ? (
+          <span className="message-signal-pill-warm is-verified">
+            {language === 'fr' ? 'Réponse vérifiée' : 'Verified'}
           </span>
         ) : null}
       </div>

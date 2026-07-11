@@ -41,6 +41,14 @@ export interface MessageRoutingTrace {
     priority: number;
     reason: string;
   }>;
+  research?: {
+    needed: boolean;
+    sourcesCount: number;
+    status: 'skipped' | 'success' | 'failed';
+  };
+  critic?: {
+    status: 'passed' | 'warned' | 'blocked';
+  };
 }
 
 export type MessageArtifact =

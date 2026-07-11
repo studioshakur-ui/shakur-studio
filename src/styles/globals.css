@@ -2884,6 +2884,12 @@ main {
   color: var(--steel);
 }
 
+.message-signal-pill-warm.is-verified {
+  border-color: rgba(216, 200, 184, 0.14);
+  background: rgba(255, 248, 238, 0.05);
+  color: var(--steel);
+}
+
 .message-time-warm {
   font-size: 0.78rem;
   line-height: var(--lh-small);
