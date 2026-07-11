@@ -1,6 +1,9 @@
-import { Message } from './providers/providerTypes';
+import type { Message } from './providers/providerTypes';
 import { supabase } from './supabaseClient';
-import { ResolvedPetawIntent, detectConversationLanguage } from './intentRouter';
+import { detectConversationLanguage } from './intentRouter';
+import type { ResolvedPetawIntent } from './intentRouter';
+import { getStoredLanguage } from '../i18n/config';
+import type { DocumentItem } from './shakurOS';
 
 interface ChatResponse {
   text: string;
@@ -8,11 +11,119 @@ interface ChatResponse {
   messageId: string;
   provider: string;
   model: string;
+  orchestration?: ChatOrchestration;
+}
+
+export interface RemoteDocumentRecord {
+  id: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  status: 'uploaded' | 'processing' | 'ready' | 'partial' | 'failed' | 'deleted';
+  contentStatus: 'none' | 'partial' | 'full_text';
+  parserType?: string;
+  qualityScore?: number;
+  errorCode?: string;
+  errorMessage?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface StreamEvent {
   event: string;
   data: unknown;
+}
+
+interface OrchestrationHints {
+  clientIntent: string;
+  clientIntentConfidence: number;
+  requestedMode: string;
+  webSearchRequested: boolean;
+  locale?: string;
+  country?: string;
+}
+
+interface ChatOrchestrationToolAction {
+  kind: string;
+  status: string;
+  priority: number;
+  reason: string;
+}
+
+interface ChatOrchestrationToolTrace {
+  status: 'chat_only' | 'tool_augmented' | 'handoff_required';
+  actions: ChatOrchestrationToolAction[];
+  handoff?: {
+    target: 'image_generation';
+    reason: string;
+  };
+}
+
+interface ChatOrchestration {
+  tools?: ChatOrchestrationToolTrace;
+  document?: {
+    retrieval?: {
+      query?: string;
+      strategy?: string;
+      selectedChunks?: Array<{
+        documentId: string;
+        chunkIndex: number;
+        lexicalScore?: number;
+        vectorScore?: number;
+        finalScore?: number;
+      }>;
+    };
+  };
+}
+
+export interface ChatCompletion {
+  text: string;
+  artifacts?: Array<{
+    type: 'image';
+    id: string;
+    prompt: string;
+    mimeType: 'image/png' | 'image/jpeg' | 'image/webp';
+    dataUrl?: string;
+    url?: string;
+    width: number;
+    height: number;
+    provider?: string;
+    model?: string;
+    estimatedCost?: number;
+      fallbackUsed?: boolean;
+    }>;
+  routingTrace?: {
+    provider?: string;
+    model?: string;
+    toolStatus?: 'chat_only' | 'tool_augmented' | 'handoff_required';
+    handoffTarget?: 'image_generation';
+    documentRetrieval?: {
+      query?: string;
+      strategy?: string;
+      selectedChunks?: Array<{
+        documentId: string;
+        documentName?: string;
+        chunkIndex: number;
+        lexicalScore?: number;
+        vectorScore?: number;
+        finalScore?: number;
+      }>;
+    };
+    actions?: ChatOrchestrationToolAction[];
+  };
+}
+
+export interface DocumentEmbeddingsBackfillResponse {
+  ok?: boolean;
+  summary?: {
+    documentsScanned?: number;
+    documentsEligible?: number;
+    documentsEmbedded?: number;
+    chunksEmbedded?: number;
+    chunksSkipped?: number;
+    chunksFailed?: number;
+  };
+  message?: string;
 }
 
 type RoutingMode = 'auto' | 'cheap' | 'balanced' | 'premium' | 'local';
@@ -171,6 +282,7 @@ function createPayload(
   providerId: string,
   modelId: string,
   messages: Message[],
+  files: DocumentItem[],
   webSearchEnabled: boolean,
   stream: boolean,
   intent: ResolvedPetawIntent
@@ -234,6 +346,14 @@ function createPayload(
   }));
 
   const finalMessages = [...injectedMessages, ...messages];
+  const orchestration: OrchestrationHints = {
+    clientIntent: intent.id,
+    clientIntentConfidence: intent.confidence,
+    requestedMode: mode,
+    webSearchRequested: webSearchEnabled || intent.webSearchEnabled,
+    locale: detectedLang,
+    country: context.country
+  };
 
   return {
     mode: inferMode(providerId, mode),
@@ -242,8 +362,17 @@ function createPayload(
     preferredProviderId: optionalProviderPreference(providerId),
     preferredModelId: optionalModelPreference(mode),
     requiredCapabilities: intent.requiredCapabilities,
+    files: files.map((file) => ({
+      id: file.id,
+      name: file.name,
+      mimeType: file.type,
+      sizeBytes: file.sizeBytes,
+      extractionStatus: file.extractionStatus
+    })),
+    documentIds: files.map((file) => file.id),
     stream,
     messages: finalMessages,
+    orchestration,
     metadata: {
       app: 'petaw-web',
       petawMode: mode,
@@ -283,25 +412,27 @@ export async function chatWithShakurOS(
   providerId: string,
   modelId: string,
   messages: Message[],
+  files: DocumentItem[],
   webSearchEnabled: boolean,
   onProgress: (text: string) => void,
   intent: ResolvedPetawIntent
-): Promise<string> {
-  return chatWithoutStreaming(providerId, modelId, messages, webSearchEnabled, onProgress, intent);
+): Promise<ChatCompletion> {
+  return chatWithoutStreaming(providerId, modelId, messages, files, webSearchEnabled, onProgress, intent);
 }
 
 export async function streamChatWithShakurOS(
   providerId: string,
   modelId: string,
   messages: Message[],
+  files: DocumentItem[],
   webSearchEnabled: boolean,
   onProgress: (text: string) => void,
   intent: ResolvedPetawIntent
-): Promise<string> {
+): Promise<ChatCompletion> {
   const response = await fetch(`${API_URL}/v1/chat`, {
     method: 'POST',
     headers: await createHeaders(),
-    body: JSON.stringify(createPayload(providerId, modelId, messages, webSearchEnabled, true, intent))
+    body: JSON.stringify(createPayload(providerId, modelId, messages, files, webSearchEnabled, true, intent))
   });
 
   if (!response.ok) {
@@ -310,13 +441,16 @@ export async function streamChatWithShakurOS(
   }
 
   if (!response.body) {
-    return chatWithoutStreaming(providerId, modelId, messages, webSearchEnabled, onProgress, intent);
+    return chatWithoutStreaming(providerId, modelId, messages, files, webSearchEnabled, onProgress, intent);
   }
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
   let text = '';
+  let orchestration: ChatOrchestration | undefined;
+  let selectedProvider: string | undefined;
+  let selectedModel: string | undefined;
 
   while (true) {
     const { value, done } = await reader.read();
@@ -329,10 +463,24 @@ export async function streamChatWithShakurOS(
     buffer = parsed.remaining;
 
     for (const event of parsed.events) {
+      if (event.event === 'metadata') {
+        const metadata = event.data as { orchestration?: ChatOrchestration; provider?: string; model?: string };
+        orchestration = metadata.orchestration;
+        selectedProvider = metadata.provider;
+        selectedModel = metadata.model;
+      }
+
       if (event.event === 'token') {
         const chunk = (event.data as { text?: string }).text ?? '';
         text += chunk;
         onProgress(text);
+      }
+
+      if (event.event === 'done') {
+        const done = event.data as { orchestration?: ChatOrchestration; provider?: string; model?: string };
+        orchestration = done.orchestration ?? orchestration;
+        selectedProvider = done.provider ?? selectedProvider;
+        selectedModel = done.model ?? selectedModel;
       }
 
       if (event.event === 'error') {
@@ -341,21 +489,30 @@ export async function streamChatWithShakurOS(
     }
   }
 
-  return text;
+  const handoff = orchestration?.tools?.handoff;
+  if (handoff?.target === 'image_generation') {
+    return handleImageGenerationHandoff(text, messages, intent, selectedProvider, selectedModel, orchestration);
+  }
+
+  return {
+    text,
+    routingTrace: buildRoutingTrace(selectedProvider, selectedModel, orchestration, files)
+  };
 }
 
 async function chatWithoutStreaming(
   providerId: string,
   modelId: string,
   messages: Message[],
+  files: DocumentItem[],
   webSearchEnabled: boolean,
   onProgress: (text: string) => void,
   intent: ResolvedPetawIntent
-): Promise<string> {
+): Promise<ChatCompletion> {
   const response = await fetch(`${API_URL}/v1/chat`, {
     method: 'POST',
     headers: await createHeaders(),
-    body: JSON.stringify(createPayload(providerId, modelId, messages, webSearchEnabled, false, intent))
+    body: JSON.stringify(createPayload(providerId, modelId, messages, files, webSearchEnabled, false, intent))
   });
 
   if (!response.ok) {
@@ -364,8 +521,16 @@ async function chatWithoutStreaming(
   }
 
   const result = await response.json() as ChatResponse;
+  const handoff = result.orchestration?.tools?.handoff;
+  if (handoff?.target === 'image_generation') {
+    return handleImageGenerationHandoff(result.text, messages, intent, result.provider, result.model, result.orchestration);
+  }
+
   onProgress(result.text);
-  return result.text;
+  return {
+    text: result.text,
+    routingTrace: buildRoutingTrace(result.provider, result.model, result.orchestration, files)
+  };
 }
 
 export async function fetchProviderStatus(): Promise<ProvidersStatusResponse> {
@@ -380,6 +545,133 @@ export async function fetchProviderStatus(): Promise<ProvidersStatusResponse> {
   }
 
   return response.json() as Promise<ProvidersStatusResponse>;
+}
+
+export async function fetchDocumentsFromShakurOS(): Promise<RemoteDocumentRecord[]> {
+  const response = await fetch(`${API_URL}/v1/documents`, {
+    method: 'GET',
+    headers: await createHeaders()
+  });
+
+  if (!response.ok) {
+    const fallback = await response.json().catch(() => null) as { error?: string } | null;
+    throw new Error(fallback?.error ?? `ShakurOS documents request failed with status ${response.status}`);
+  }
+
+  const result = await response.json() as { documents?: RemoteDocumentRecord[] };
+  return Array.isArray(result.documents) ? result.documents : [];
+}
+
+export async function fetchDocumentStatusFromShakurOS(documentId: string): Promise<RemoteDocumentRecord> {
+  const response = await fetch(`${API_URL}/v1/documents/${documentId}`, {
+    method: 'GET',
+    headers: await createHeaders()
+  });
+
+  if (!response.ok) {
+    const fallback = await response.json().catch(() => null) as { error?: string } | null;
+    throw new Error(fallback?.error ?? `ShakurOS document lookup failed with status ${response.status}`);
+  }
+
+  const result = await response.json() as { document?: RemoteDocumentRecord };
+  if (!result.document) {
+    throw new Error('ShakurOS document lookup did not return a document.');
+  }
+
+  return result.document;
+}
+
+export async function registerDocumentWithShakurOS(file: Pick<File, 'name' | 'size' | 'type'>): Promise<RemoteDocumentRecord> {
+  const response = await fetch(`${API_URL}/v1/documents`, {
+    method: 'POST',
+    headers: await createHeaders(),
+    body: JSON.stringify({
+      filename: file.name,
+      mimeType: file.type || 'application/octet-stream',
+      sizeBytes: file.size
+    })
+  });
+
+  if (!response.ok) {
+    const fallback = await response.json().catch(() => null) as { error?: string } | null;
+    throw new Error(fallback?.error ?? `ShakurOS document registration failed with status ${response.status}`);
+  }
+
+  const result = await response.json() as { document?: RemoteDocumentRecord };
+  if (!result.document) {
+    throw new Error('ShakurOS document registration did not return a document.');
+  }
+
+  return result.document;
+}
+
+export async function uploadDocumentContentToShakurOS(documentId: string, file: File): Promise<RemoteDocumentRecord> {
+  const accessToken = await getAccessToken();
+  const response = await fetch(`${API_URL}/v1/documents/${documentId}/content`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': file.type || 'application/octet-stream'
+    },
+    body: file
+  });
+
+  if (!response.ok) {
+    const fallback = await response.json().catch(() => null) as { error?: string } | null;
+    throw new Error(fallback?.error ?? `ShakurOS document content upload failed with status ${response.status}`);
+  }
+
+  const result = await response.json() as { accepted?: boolean; document?: RemoteDocumentRecord };
+  if (!result.document) {
+    throw new Error('ShakurOS document content upload did not return a document.');
+  }
+
+  return result.document;
+}
+
+export async function deleteDocumentFromShakurOS(documentId: string): Promise<void> {
+  const response = await fetch(`${API_URL}/v1/documents/${documentId}`, {
+    method: 'DELETE',
+    headers: await createHeaders()
+  });
+
+  if (!response.ok) {
+    const fallback = await response.json().catch(() => null) as { error?: string } | null;
+    throw new Error(fallback?.error ?? `ShakurOS document delete failed with status ${response.status}`);
+  }
+}
+
+export async function backfillDocumentEmbeddingsWithShakurOS(): Promise<DocumentEmbeddingsBackfillResponse> {
+  const response = await fetch(`${API_URL}/v1/documents/backfill-embeddings`, {
+    method: 'POST',
+    headers: await createHeaders()
+  });
+
+  if (!response.ok) {
+    const fallback = await response.json().catch(() => null) as { error?: string } | null;
+    throw new Error(fallback?.error ?? `ShakurOS embeddings backfill failed with status ${response.status}`);
+  }
+
+  return response.json() as Promise<DocumentEmbeddingsBackfillResponse>;
+}
+
+export async function reprocessDocumentWithShakurOS(documentId: string): Promise<RemoteDocumentRecord> {
+  const response = await fetch(`${API_URL}/v1/documents/${documentId}/reprocess`, {
+    method: 'POST',
+    headers: await createHeaders()
+  });
+
+  if (!response.ok) {
+    const fallback = await response.json().catch(() => null) as { error?: string } | null;
+    throw new Error(fallback?.error ?? `ShakurOS document reprocess failed with status ${response.status}`);
+  }
+
+  const result = await response.json() as { document?: RemoteDocumentRecord };
+  if (!result.document) {
+    throw new Error('ShakurOS document reprocess did not return a document.');
+  }
+
+  return result.document;
 }
 
 export async function generateImageWithShakurOS(options: GenerateImageOptions): Promise<ImageGenerationResponse> {
@@ -407,4 +699,83 @@ export async function generateImageWithShakurOS(options: GenerateImageOptions): 
   }
 
   return response.json() as Promise<ImageGenerationResponse>;
+}
+
+async function handleImageGenerationHandoff(
+  fallbackText: string,
+  messages: Message[],
+  intent: ResolvedPetawIntent,
+  provider?: string,
+  model?: string,
+  orchestration?: ChatOrchestration
+): Promise<ChatCompletion> {
+  const prompt = resolveImagePrompt(messages, intent);
+  if (!prompt) {
+    return { text: fallbackText };
+  }
+
+  const language = getStoredLanguage();
+  const imageResult = await generateImageWithShakurOS({
+    prompt,
+    mode: intent.modeId === 'premium' ? 'premium' : intent.modeId === 'economy' ? 'economical' : intent.modeId === 'local' ? 'local' : 'auto',
+    quality: intent.modeId === 'premium' ? 'high' : 'standard',
+    style: 'african-premium',
+    size: '1024x1024',
+    count: 1,
+    locale: language
+  });
+
+  const text = language === 'fr' ? "Voici l'image." : 'Here is the image.';
+  return {
+    text,
+    artifacts: imageResult.images.map((image) => ({
+      type: 'image' as const,
+      id: image.id,
+      prompt: image.prompt,
+      mimeType: image.mimeType,
+      dataUrl: image.dataUrl,
+      url: image.url,
+      width: image.width,
+      height: image.height,
+      provider: imageResult.provider,
+      model: imageResult.model,
+      estimatedCost: imageResult.estimatedCost,
+      fallbackUsed: imageResult.fallbackUsed
+    })),
+    routingTrace: buildRoutingTrace(provider, model, orchestration, [])
+  };
+}
+
+function resolveImagePrompt(messages: Message[], intent: ResolvedPetawIntent): string {
+  if (typeof intent.metadata.imagePrompt === 'string' && intent.metadata.imagePrompt.trim()) {
+    return intent.metadata.imagePrompt.trim();
+  }
+
+  const lastUserMessage = [...messages].reverse().find((message) => message.role === 'user')?.content.trim();
+  return lastUserMessage ?? '';
+}
+
+function buildRoutingTrace(
+  provider: string | undefined,
+  model: string | undefined,
+  orchestration?: ChatOrchestration,
+  documentFiles: DocumentItem[] = []
+): ChatCompletion['routingTrace'] {
+  const knownDocuments = new Map<string, string>(documentFiles.map((document) => [document.id, document.name]));
+  return {
+    provider,
+    model,
+    toolStatus: orchestration?.tools?.status,
+    handoffTarget: orchestration?.tools?.handoff?.target,
+    documentRetrieval: orchestration?.document?.retrieval
+      ? {
+          ...orchestration.document.retrieval,
+          selectedChunks: orchestration.document.retrieval.selectedChunks?.map((chunk) => ({
+            ...chunk,
+            documentName: knownDocuments.get(chunk.documentId)
+          }))
+      }
+      : undefined,
+    actions: orchestration?.tools?.actions
+  };
 }

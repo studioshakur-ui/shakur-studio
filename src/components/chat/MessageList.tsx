@@ -6,6 +6,13 @@ interface MessageListProps {
   isStreaming: boolean;
   isSearching?: boolean;
   language?: string;
+  workStatus?: {
+    title: string;
+    detail: string;
+    steps: string[];
+    activeStep: number;
+    progress: number;
+  } | null;
 }
 
 function parseInlineMarkdown(text: string): ReactNode {
@@ -86,8 +93,9 @@ function parseInlineMarkdown(text: string): ReactNode {
   return <>{parts}</>;
 }
 
-export function MessageList({ messages, isStreaming, isSearching, language }: MessageListProps) {
+export function MessageList({ messages, isStreaming, isSearching, language, workStatus }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const isAdminMode = window.localStorage.getItem('petaw-admin-mode') === 'true';
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -185,6 +193,103 @@ export function MessageList({ messages, isStreaming, isSearching, language }: Me
     );
   };
 
+  const renderAttachments = (msg: Message) => {
+    if (!msg.attachments?.length) {
+      return null;
+    }
+
+    return (
+      <div className="message-attachments-warm">
+        {msg.attachments.map((attachment) => (
+          <div key={attachment.id} className="message-attachment-chip-warm">
+            <span className="message-attachment-name-warm">{attachment.name}</span>
+            <span className="message-attachment-meta-warm">
+              {attachment.status === 'processing'
+                ? 'processing'
+                : attachment.extractionStatus === 'full_text'
+                  ? 'text'
+                  : attachment.extractionStatus === 'partial'
+                    ? 'partial'
+                    : attachment.status === 'failed'
+                      ? 'failed'
+                      : 'file'}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderWorkStatus = () => {
+    if (!workStatus) {
+      return (
+        <div className="typing-indicator-warm">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      );
+    }
+
+    const activeLabel = workStatus.steps[workStatus.activeStep] ?? workStatus.title;
+
+    return (
+      <div className="assistant-workboard-warm" role="status" aria-live="polite">
+        <div className="assistant-work-orbit-warm" aria-hidden="true">
+          <span className="assistant-work-orbit-core-warm" />
+          <span className="assistant-work-orbit-ring-warm" />
+        </div>
+        <div className="assistant-workboard-content-warm">
+          <div className="assistant-workboard-kicker-warm">PETAW</div>
+          <div className="assistant-workboard-head-warm">
+            <span className="assistant-workboard-title-warm">{workStatus.title}</span>
+            <span className="assistant-workboard-separator-warm">·</span>
+            <span key={activeLabel} className="assistant-workboard-active-warm">{activeLabel}</span>
+          </div>
+          <span className="assistant-workboard-detail-warm">{workStatus.detail}</span>
+          <div className="assistant-work-progress-warm" aria-hidden="true">
+            <span style={{ width: `${workStatus.progress}%` }} />
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderRetrievedDocuments = (msg: Message) => {
+    const selectedChunks = msg.routingTrace?.documentRetrieval?.selectedChunks;
+    if (!selectedChunks || selectedChunks.length === 0) {
+      return null;
+    }
+
+    const uniqueDocuments = Array.from(new Map(
+      selectedChunks.map((chunk) => [chunk.documentId, {
+        documentId: chunk.documentId,
+        documentName: chunk.documentName ?? `doc ${chunk.documentId.slice(0, 8)}`,
+        chunkCount: selectedChunks.filter((entry) => entry.documentId === chunk.documentId).length
+      }])
+    ).values());
+
+    return (
+      <div className="message-retrieval-summary-warm">
+        <div className="message-retrieval-label-warm">
+          {language === 'fr' ? 'Documents utilisés' : 'Documents used'}
+        </div>
+        <div className="message-retrieval-docs-warm">
+          {uniqueDocuments.map((document) => (
+            <div key={document.documentId} className="message-retrieval-doc-chip-warm">
+              <span className="message-retrieval-doc-name-warm">{document.documentName}</span>
+              <span className="message-retrieval-doc-meta-warm">
+                {language === 'fr'
+                  ? `${document.chunkCount} extrait${document.chunkCount > 1 ? 's' : ''}`
+                  : `${document.chunkCount} excerpt${document.chunkCount > 1 ? 's' : ''}`}
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const renderSources = (content: string) => {
     const sources = extractMarkdownLinks(content);
     if (sources.length === 0) {
@@ -210,6 +315,87 @@ export function MessageList({ messages, isStreaming, isSearching, language }: Me
     );
   };
 
+  const renderRoutingTrace = (msg: Message) => {
+    if (!isAdminMode || msg.role !== 'assistant' || !msg.routingTrace) {
+      return null;
+    }
+
+    const summaryBits = [
+      msg.routingTrace.provider ? `provider: ${msg.routingTrace.provider}` : null,
+      msg.routingTrace.model ? `model: ${msg.routingTrace.model}` : null,
+      msg.routingTrace.toolStatus ? `tools: ${msg.routingTrace.toolStatus}` : null,
+      msg.routingTrace.handoffTarget ? `handoff: ${msg.routingTrace.handoffTarget}` : null
+    ].filter(Boolean);
+
+    return (
+      <div className="shakuros-routing-details-warm">
+        <details className="routing-details-toggle">
+          <summary className="routing-details-summary">
+            {summaryBits.join(' • ') || 'routing trace'}
+          </summary>
+          <div className="routing-details-content">
+            {msg.routingTrace.documentRetrieval ? (
+              <div style={{ marginBottom: '10px' }}>
+                <p>
+                  <strong>retrieval</strong>{' '}
+                  [{msg.routingTrace.documentRetrieval.strategy ?? 'unknown'}]
+                  {msg.routingTrace.documentRetrieval.query ? ` ${msg.routingTrace.documentRetrieval.query}` : ''}
+                </p>
+                {msg.routingTrace.documentRetrieval.selectedChunks?.length ? (
+                  <div style={{ display: 'grid', gap: '6px' }}>
+                    {msg.routingTrace.documentRetrieval.selectedChunks.map((chunk) => (
+                      <p key={`${chunk.documentId}-${chunk.chunkIndex}`} style={{ margin: 0 }}>
+                        <strong>chunk</strong> doc={chunk.documentId.slice(0, 8)} idx={chunk.chunkIndex}
+                        {typeof chunk.finalScore === 'number' ? ` final=${chunk.finalScore.toFixed(3)}` : ''}
+                        {typeof chunk.vectorScore === 'number' ? ` vector=${chunk.vectorScore.toFixed(3)}` : ''}
+                        {typeof chunk.lexicalScore === 'number' ? ` lexical=${chunk.lexicalScore.toFixed(3)}` : ''}
+                      </p>
+                    ))}
+                  </div>
+                ) : (
+                  <p><strong>retrieval</strong> no chunk selected</p>
+                )}
+              </div>
+            ) : null}
+            {msg.routingTrace.actions?.map((action) => (
+              <p key={`${action.kind}-${action.priority}`}>
+                <strong>{action.kind}</strong>{' '}
+                [{action.status}] {action.reason}
+              </p>
+            ))}
+          </div>
+        </details>
+      </div>
+    );
+  };
+
+  const renderAssistantSignal = (msg: Message) => {
+    if (msg.role !== 'assistant') {
+      return null;
+    }
+
+    const hasDocumentSupport = Boolean(msg.routingTrace?.documentRetrieval?.selectedChunks?.length);
+    const hasWebSources = extractMarkdownLinks(msg.content).length > 0;
+    if (!hasDocumentSupport && !hasWebSources) {
+      return null;
+    }
+
+    return (
+      <div className="message-signal-row-warm">
+        {hasDocumentSupport ? (
+          <span className="message-signal-pill-warm">
+            {language === 'fr' ? 'Appuyé sur documents' : 'Document-backed'}
+          </span>
+        ) : null}
+        {hasWebSources ? (
+          <span className="message-signal-pill-warm is-web">
+            {language === 'fr' ? 'Sources web' : 'Web sources'}
+          </span>
+        ) : null}
+      </div>
+    );
+  };
+
   return (
     <div className="message-list-warm">
       {visibleMessages.map((msg, index) => {
@@ -223,9 +409,12 @@ export function MessageList({ messages, isStreaming, isSearching, language }: Me
           >
             <div className="message-payload-warm">
               <div className="message-header-warm">
-                <span className="message-sender-label-warm">
-                  {isUser ? 'Vous' : 'PETAW'}
-                </span>
+                <div className="message-header-main-warm">
+                  <span className="message-sender-label-warm">
+                    {isUser ? 'Vous' : 'PETAW'}
+                  </span>
+                  {!isUser ? renderAssistantSignal(msg) : null}
+                </div>
                 <span className="message-time-warm">
                   {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
@@ -234,15 +423,14 @@ export function MessageList({ messages, isStreaming, isSearching, language }: Me
                 {msg.content || msg.artifacts?.length ? (
                   <>
                     {msg.content ? renderMessageContent(msg.content) : null}
+                    {renderAttachments(msg)}
+                    {!isUser ? renderRetrievedDocuments(msg) : null}
                     {!isUser && msg.content ? renderSources(msg.content) : null}
+                    {!isUser ? renderRoutingTrace(msg) : null}
                     {renderArtifacts(msg)}
                   </>
                 ) : (
-                  <div className="typing-indicator-warm">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                  </div>
+                  renderWorkStatus()
                 )}
               </div>
             </div>
@@ -255,16 +443,9 @@ export function MessageList({ messages, isStreaming, isSearching, language }: Me
           <div className="message-payload-warm">
             <div className="message-body-warm">
               {isSearching ? (
-                <div className="search-loader-warm">
-                  <span className="search-loader-icon-warm"></span>
-                  <span>{language === 'en' ? 'Verifying information…' : 'Vérification des informations…'}</span>
-                </div>
+                renderWorkStatus()
               ) : (
-                <div className="typing-indicator-warm">
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </div>
+                renderWorkStatus()
               )}
             </div>
           </div>

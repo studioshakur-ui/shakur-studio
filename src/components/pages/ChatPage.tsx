@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Globe, Trash2, StopCircle, RefreshCw } from 'lucide-react';
+import { Send, Globe, Trash2, StopCircle, RefreshCw, Paperclip, X } from 'lucide-react';
 import { MessageList } from '../chat/MessageList';
-import { ShakurOS, Conversation } from '../../lib/shakurOS';
+import { ShakurOS, Conversation, DocumentItem } from '../../lib/shakurOS';
 import { Message } from '../../lib/providers/providerTypes';
 import { translate } from '../../i18n/config';
 import { Language } from '../../i18n/translations';
 import { Session } from '@supabase/supabase-js';
 import { userUnderstandingService, UserContext } from '../../lib/userUnderstandingService';
 import { PetawIntentId, PetawIntentPreset, PetawModeId, resolvePetawIntent, ShakurTaskType } from '../../lib/intentRouter';
+import { friendlyErrorMessage } from '../../lib/friendlyError';
 
 interface ChatPageProps {
   language: Language;
@@ -198,10 +199,18 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
   const [isStreaming, setIsStreaming] = useState(false);
   const [selectedPreset, setSelectedPreset] = useState<PetawIntentPreset | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const [attachedDocuments, setAttachedDocuments] = useState<DocumentItem[]>([]);
+  const [uploadingDocuments, setUploadingDocuments] = useState<string[]>([]);
+  const [attachmentError, setAttachmentError] = useState<string | null>(null);
+  const [isDraggingFiles, setIsDraggingFiles] = useState(false);
+  const [workPhase, setWorkPhase] = useState<'idle' | 'uploading' | 'document_processing' | 'retrieving' | 'researching' | 'thinking' | 'writing'>('idle');
+  const [activeWorkDocuments, setActiveWorkDocuments] = useState<DocumentItem[]>([]);
+  const [workTick, setWorkTick] = useState(0);
   
   const [currentChat, setCurrentChat] = useState<Conversation | null>(null);
   const [memoryProject, setMemoryProject] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const t = (key: Parameters<typeof translate>[1]) => translate(language, key);
 
@@ -269,6 +278,57 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
     }
   }, [input]);
 
+  useEffect(() => {
+    const pending = activeWorkDocuments.filter((document) => document.status === 'uploaded' || document.status === 'processing');
+    if (pending.length === 0) {
+      return undefined;
+    }
+
+    const interval = window.setInterval(() => {
+      void Promise.all(pending.map((document) => ShakurOS.refreshDocument(document.id)))
+        .then((updated) => {
+          setActiveWorkDocuments((previous) => previous.map((document) => updated.find((item) => item.id === document.id) ?? document));
+        })
+        .catch(() => undefined);
+    }, 2500);
+
+    return () => window.clearInterval(interval);
+  }, [activeWorkDocuments]);
+
+  useEffect(() => {
+    if (!isStreaming || activeWorkDocuments.length === 0) {
+      return;
+    }
+
+    const hasPendingDocuments = activeWorkDocuments.some((document) => document.status === 'uploaded' || document.status === 'processing');
+    if (workPhase === 'document_processing' && !hasPendingDocuments) {
+      setWorkPhase(isSearching ? 'researching' : 'retrieving');
+      return;
+    }
+
+    if (workPhase === 'retrieving' && isSearching) {
+      setWorkPhase('researching');
+      return;
+    }
+
+    if (workPhase === 'researching' && !isSearching) {
+      setWorkPhase('thinking');
+    }
+  }, [activeWorkDocuments, isSearching, isStreaming, workPhase]);
+
+  useEffect(() => {
+    if (!isStreaming) {
+      setWorkTick(0);
+      return undefined;
+    }
+
+    const interval = window.setInterval(() => {
+      setWorkTick((tick) => tick + 1);
+    }, 1400);
+
+    return () => window.clearInterval(interval);
+  }, [isStreaming]);
+
   const handleModelChange = (pId: string, mId: string) => {
     setProviderId(pId);
     setModelId(mId);
@@ -280,6 +340,20 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
     if (mode === 'economy') return 'economical';
     if (mode === 'local') return 'local';
     return 'auto';
+  };
+
+  const resolveDocumentContextFiles = (intentId: PetawIntentId, explicitDocuments: DocumentItem[]) => {
+    if (explicitDocuments.length > 0) {
+      return explicitDocuments;
+    }
+
+    if (intentId !== 'capture') {
+      return [];
+    }
+
+    return ShakurOS.getDocuments()
+      .slice(0, 3)
+      .sort((left, right) => new Date(right.uploadedAt).getTime() - new Date(left.uploadedAt).getTime());
   };
 
   const getGreetingStructure = () => {
@@ -314,11 +388,20 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!input.trim() || isStreaming) return;
+    if ((!input.trim() && attachedDocuments.length === 0) || isStreaming) return;
 
-    const userMessageText = input.trim();
+    const userMessageText = input.trim() || (language === 'fr' ? 'Analyse les documents joints.' : 'Analyze the attached documents.');
+    const submittedDocuments = [...attachedDocuments];
     setInput('');
+    setAttachedDocuments([]);
+    setActiveWorkDocuments(submittedDocuments);
+    setAttachmentError(null);
     setIsStreaming(true);
+    setWorkPhase(
+      submittedDocuments.some((document) => document.status === 'uploaded' || document.status === 'processing')
+        ? 'document_processing'
+        : resolvedWorkPhaseStart(webSearchEnabled, submittedDocuments.length > 0)
+    );
     const resolvedIntent = resolvePetawIntent({
       text: userMessageText,
       messages: currentChat?.messages ?? [],
@@ -339,7 +422,14 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
       id: crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 9),
       role: 'user',
       content: userMessageText,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      attachments: submittedDocuments.map((document) => ({
+        id: document.id,
+        name: document.name,
+        mimeType: document.type,
+        sizeBytes: document.sizeBytes,
+        extractionStatus: document.extractionStatus
+      }))
     };
 
     let chat: Conversation;
@@ -401,6 +491,20 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
             msgs[lastMsgIdx] = {
               ...msgs[lastMsgIdx],
               content: language === 'fr' ? "Voici l'image." : 'Here is the image.',
+              routingTrace: {
+                provider: imageResult.provider,
+                model: imageResult.model,
+                toolStatus: 'handoff_required',
+                handoffTarget: 'image_generation',
+                actions: [
+                  {
+                    kind: 'image_generation',
+                    status: 'executed',
+                    priority: 100,
+                    reason: 'Frontend image intent triggered direct image generation.'
+                  }
+                ]
+              },
               artifacts: imageResult.images.map((image) => ({
                 type: 'image',
                 id: image.id,
@@ -422,13 +526,15 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
           return finalChat;
         });
       } else {
-        await ShakurOS.chat(
+        const chatResult = await ShakurOS.chat(
           providerId,
           providerId === 'auto' ? resolvedIntent.modeId : modelId,
           chat.messages,
+          resolveDocumentContextFiles(resolvedIntent.id, submittedDocuments),
           webSearchEnabled,
           (progressText) => {
             setIsSearching(false);
+            setWorkPhase('writing');
             setCurrentChat((prevChat) => {
               if (!prevChat) return null;
               const msgs = [...prevChat.messages];
@@ -446,6 +552,23 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
           },
           resolvedIntent
         );
+
+        setCurrentChat((prevChat) => {
+          if (!prevChat) return null;
+          const msgs = [...prevChat.messages];
+          const lastMsgIdx = msgs.findIndex(m => m.id === assistantMsgId);
+          if (lastMsgIdx >= 0) {
+            msgs[lastMsgIdx] = {
+              ...msgs[lastMsgIdx],
+              content: chatResult.text,
+              routingTrace: chatResult.routingTrace,
+              ...(chatResult.artifacts?.length ? { artifacts: chatResult.artifacts } : {})
+            };
+          }
+          const finalChat = { ...prevChat, messages: msgs };
+          ShakurOS.saveConversation(finalChat);
+          return finalChat;
+        });
       }
     } catch (err) {
       console.error(err);
@@ -456,7 +579,7 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
         if (lastMsgIdx >= 0) {
           msgs[lastMsgIdx] = {
             ...msgs[lastMsgIdx],
-            content: "Connexion interrompue. Veuillez vérifier vos clés dans les Paramètres."
+            content: friendlyErrorMessage(err, language)
           };
         }
         return { ...prevChat, messages: msgs };
@@ -465,9 +588,82 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
       setIsSearching(false);
       setIsStreaming(false);
       setSelectedPreset(null);
+      setWorkPhase('idle');
+      setActiveWorkDocuments([]);
       setTimeout(() => textareaRef.current?.focus(), 50);
     }
   };
+
+  const registerChatFiles = async (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    if (fileArray.length === 0) {
+      return;
+    }
+
+    setAttachmentError(null);
+    setUploadingDocuments(fileArray.map((file) => file.name));
+    setWorkPhase('uploading');
+
+    try {
+      const uploaded = await Promise.all(fileArray.map((file) => ShakurOS.uploadDocument(file)));
+      setAttachedDocuments((previous) => {
+        const next = [...previous];
+        for (const document of uploaded) {
+          if (!next.some((entry) => entry.id === document.id)) {
+            next.push(document);
+          }
+        }
+        return next;
+      });
+    } catch (error) {
+      setAttachmentError(friendlyErrorMessage(error, language));
+    } finally {
+      setUploadingDocuments([]);
+      setWorkPhase((current) => current === 'uploading' ? 'idle' : current);
+    }
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      void registerChatFiles(files);
+    }
+    event.target.value = '';
+  };
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    if (!isDraggingFiles) {
+      setIsDraggingFiles(true);
+    }
+  };
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault();
+    const nextTarget = event.relatedTarget as Node | null;
+    if (!nextTarget || !event.currentTarget.contains(nextTarget)) {
+      setIsDraggingFiles(false);
+    }
+  };
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDraggingFiles(false);
+    const files = event.dataTransfer.files;
+    if (files && files.length > 0) {
+      void registerChatFiles(files);
+    }
+  };
+
+  const removeAttachedDocument = (documentId: string) => {
+    setAttachedDocuments((previous) => previous.filter((document) => document.id !== documentId));
+  };
+
+  const workStatus = buildWorkStatus(language, workPhase, {
+    uploadingCount: uploadingDocuments.length,
+    attachedDocuments: activeWorkDocuments,
+    workTick
+  });
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -521,7 +717,12 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
   };
 
   return (
-    <div className="chat-container-warm">
+    <div
+      className={`chat-container-warm ${isDraggingFiles ? 'is-dragging-files-warm' : ''}`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       {/* Header bar */}
       <div className="chat-header-bar-warm">
         <div className="chat-header-left" />
@@ -632,7 +833,13 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
             </p>
           </div>
         ) : (
-          <MessageList messages={currentChat.messages} isStreaming={isStreaming} isSearching={isSearching} language={language} />
+          <MessageList
+            messages={currentChat.messages}
+            isStreaming={isStreaming}
+            isSearching={isSearching}
+            language={language}
+            workStatus={workStatus}
+          />
         )}
       </div>
 
@@ -640,13 +847,67 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
       <div className="chat-input-panel-warm">
         <form onSubmit={handleSubmit} className="chat-input-form-warm">
           <div className={`chat-input-wrapper-warm ${isStreaming ? 'is-loading-warm' : ''}`}>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              multiple
+              style={{ display: 'none' }}
+            />
+            {attachedDocuments.length > 0 || uploadingDocuments.length > 0 ? (
+              <div className="chat-attachments-strip-warm">
+                {attachedDocuments.map((document) => (
+                  <div key={document.id} className="chat-attachment-chip-warm">
+                    <div className="chat-attachment-copy-warm">
+                      <span className="chat-attachment-title-warm">{document.name}</span>
+                      <span className="chat-attachment-subtitle-warm">
+                        {document.extractionStatus === 'full_text'
+                          ? (language === 'fr' ? 'Texte prêt' : 'Text ready')
+                          : document.extractionStatus === 'partial'
+                            ? (language === 'fr' ? 'Extraction partielle' : 'Partial extraction')
+                            : document.status === 'processing' || document.status === 'uploaded'
+                              ? (language === 'fr' ? 'Analyse en cours' : 'Analyzing')
+                              : document.status === 'failed'
+                                ? (language === 'fr' ? 'Échec extraction' : 'Extraction failed')
+                            : (language === 'fr' ? 'Traitement serveur' : 'Server processing')}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="chat-attachment-remove-warm"
+                      onClick={() => removeAttachedDocument(document.id)}
+                      title={language === 'fr' ? 'Retirer ce document' : 'Remove this document'}
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+                {uploadingDocuments.map((name) => (
+                  <div key={name} className="chat-attachment-chip-warm is-pending">
+                    <div className="chat-attachment-copy-warm">
+                      <span className="chat-attachment-title-warm">{name}</span>
+                      <span className="chat-attachment-subtitle-warm">
+                        {language === 'fr' ? 'Upload en cours' : 'Uploading'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {attachmentError ? (
+              <div className="chat-attachment-error-warm" role="alert">
+                {attachmentError}
+              </div>
+            ) : null}
+
             <textarea
               ref={textareaRef}
               rows={1}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={language === 'fr' ? "Pose ta question, écris, analyse..." : "Pose your question, write, analyze..."}
+              placeholder={language === 'fr' ? "Demande quelque chose à PETAW…" : "Ask PETAW anything…"}
               className="chat-textarea-warm"
               disabled={isStreaming}
             />
@@ -654,8 +915,19 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
             <div className="chat-controls-row-warm">
               <button
                 type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="search-toggle-btn-warm"
+                aria-label={language === 'fr' ? 'Joindre des fichiers' : 'Attach files'}
+                title={language === 'fr' ? 'Joindre des fichiers' : 'Attach files'}
+              >
+                <Paperclip size={14} />
+                <span>{language === 'fr' ? 'Joindre' : 'Attach'}</span>
+              </button>
+              <button
+                type="button"
                 onClick={() => setWebSearchEnabled(!webSearchEnabled)}
                 className={`search-toggle-btn-warm ${webSearchEnabled ? 'active' : ''}`}
+                aria-pressed={webSearchEnabled}
                 title={t('chat.searchToggle')}
               >
                 <Globe size={14} />
@@ -676,7 +948,7 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
                   <button
                     type="submit"
                     className="send-button-warm"
-                    disabled={!input.trim()}
+                    disabled={(!input.trim() && attachedDocuments.length === 0) || uploadingDocuments.length > 0}
                     title="Envoyer le message"
                   >
                     <Send size={13} />
@@ -686,40 +958,142 @@ export function ChatPage({ language, activeChat, onResetActiveChat, session }: C
             </div>
           </div>
 
-          {input.trim() === '' && isChatEmpty && (
-            <div className="suggestions-container-warm">
-              <div className="suggestions-header-warm">
-                <p className="suggestions-heading-warm">
-                  {language === 'fr'
-                    ? "Quelques idées pour démarrer."
-                    : "A few ways to begin."}
-                </p>
-              </div>
-              <div className="input-suggestions-grid-warm">
-                {adaptiveActions.map((action) => {
-                  return (
-                    <button
-                      key={action.id}
-                      type="button"
-                      onClick={() => handleActionSelect(action)}
-                      className={`suggestion-card-warm accent-${action.accent} ${selectedPreset?.id === action.id ? 'is-selected' : ''}`}
-                    >
-                      <div className="suggestion-card-content-warm">
-                        <span className="suggestion-card-title-warm">
-                          {action.title}
-                        </span>
-                        <span className="suggestion-card-desc-warm">
-                          {action.description}
-                        </span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </form>
       </div>
     </div>
   );
+}
+
+function resolvedWorkPhaseStart(webSearchEnabled: boolean, hasDocuments: boolean) {
+  if (webSearchEnabled) {
+    return 'researching' as const;
+  }
+  if (hasDocuments) {
+    return 'retrieving' as const;
+  }
+  return 'thinking' as const;
+}
+
+function buildWorkStatus(
+  language: Language,
+  phase: 'idle' | 'uploading' | 'document_processing' | 'retrieving' | 'researching' | 'thinking' | 'writing',
+  context: {
+    uploadingCount: number;
+    attachedDocuments: DocumentItem[];
+    workTick: number;
+  }
+) {
+  if (phase === 'idle') {
+    return null;
+  }
+
+  const processingCount = context.attachedDocuments.filter((document) => document.status === 'uploaded' || document.status === 'processing').length;
+  const readyCount = context.attachedDocuments.filter((document) => document.extractionStatus === 'full_text' || document.extractionStatus === 'partial').length;
+  const thinkingStep = Math.min(2, Math.floor(context.workTick / 2));
+  const researchStep = Math.min(2, Math.floor(context.workTick / 2));
+  const fluidProgress = (base: number, ceiling: number) => Math.min(ceiling, base + context.workTick * 4);
+
+  if (language === 'fr') {
+    switch (phase) {
+      case 'uploading':
+        return {
+          title: 'Préparation des fichiers',
+          detail: context.uploadingCount > 1 ? `${context.uploadingCount} fichiers envoyés au serveur` : 'Envoi du fichier au serveur',
+          steps: ['Upload', 'Analyse', 'Contexte', 'Rédaction'],
+          activeStep: 0,
+          progress: fluidProgress(8, 22)
+        };
+      case 'document_processing':
+        return {
+          title: 'Lecture documentaire',
+          detail: processingCount > 0 ? `${processingCount} document(s) en cours d’analyse` : 'Extraction et OCR serveur',
+          steps: ['Upload', 'Analyse', 'Contexte', 'Rédaction'],
+          activeStep: 1,
+          progress: fluidProgress(28, 48)
+        };
+      case 'retrieving':
+        return {
+          title: 'Assemblage du contexte',
+          detail: readyCount > 0 ? `${readyCount} document(s) prêts pour la réponse` : 'Sélection des passages utiles',
+          steps: ['Upload', 'Analyse', 'Contexte', 'Rédaction'],
+          activeStep: 2,
+          progress: fluidProgress(55, 72)
+        };
+      case 'researching':
+        return {
+          title: 'Recherche en direct',
+          detail: 'Vérification des informations et consolidation des sources',
+          steps: ['Recherche', 'Vérification', 'Synthèse', 'Rédaction'],
+          activeStep: researchStep,
+          progress: fluidProgress(16, 68)
+        };
+      case 'writing':
+        return {
+          title: 'Rédaction',
+          detail: 'PETAW formule la réponse finale',
+          steps: ['Comprendre', 'Structurer', 'Rédiger', 'Finaliser'],
+          activeStep: 3,
+          progress: fluidProgress(78, 96)
+        };
+      default:
+        return {
+          title: 'Réflexion',
+          detail: context.workTick < 2 ? 'Lecture de ta demande' : context.workTick < 4 ? 'Mise en relation des éléments utiles' : 'Construction d’une réponse claire',
+          steps: ['Comprendre', 'Relier', 'Structurer', 'Rédiger'],
+          activeStep: thinkingStep,
+          progress: fluidProgress(14, 72)
+        };
+    }
+  }
+
+  switch (phase) {
+    case 'uploading':
+      return {
+        title: 'Preparing files',
+        detail: context.uploadingCount > 1 ? `${context.uploadingCount} files are being sent to the server` : 'Sending file to the server',
+        steps: ['Upload', 'Analysis', 'Context', 'Writing'],
+        activeStep: 0,
+        progress: fluidProgress(8, 22)
+      };
+    case 'document_processing':
+      return {
+        title: 'Document reading',
+        detail: processingCount > 0 ? `${processingCount} document(s) are being analyzed` : 'Server extraction and OCR in progress',
+        steps: ['Upload', 'Analysis', 'Context', 'Writing'],
+        activeStep: 1,
+        progress: fluidProgress(28, 48)
+      };
+    case 'retrieving':
+      return {
+        title: 'Building context',
+        detail: readyCount > 0 ? `${readyCount} document(s) ready for answer synthesis` : 'Selecting the most useful passages',
+        steps: ['Upload', 'Analysis', 'Context', 'Writing'],
+        activeStep: 2,
+        progress: fluidProgress(55, 72)
+      };
+    case 'researching':
+      return {
+        title: 'Live research',
+        detail: 'Checking facts and consolidating sources',
+        steps: ['Search', 'Verify', 'Synthesize', 'Write'],
+        activeStep: researchStep,
+        progress: fluidProgress(16, 68)
+      };
+    case 'writing':
+      return {
+        title: 'Writing',
+        detail: 'PETAW is composing the final answer',
+        steps: ['Understand', 'Structure', 'Write', 'Polish'],
+        activeStep: 3,
+        progress: fluidProgress(78, 96)
+      };
+    default:
+      return {
+        title: 'Thinking',
+        detail: context.workTick < 2 ? 'Reading your request' : context.workTick < 4 ? 'Connecting the useful elements' : 'Building a clear response',
+        steps: ['Understand', 'Connect', 'Structure', 'Write'],
+        activeStep: thinkingStep,
+        progress: fluidProgress(14, 72)
+      };
+  }
 }

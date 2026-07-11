@@ -49,7 +49,7 @@ const INTENT_KEYWORDS: Array<{
   modeId: PetawModeId;
   taskType: ShakurTaskType;
   requiredCapabilities: ShakurCapability[];
-  terms: string[];
+  matches: (text: string) => boolean;
   confidence: number;
 }> = [
   {
@@ -57,106 +57,47 @@ const INTENT_KEYWORDS: Array<{
     modeId: 'premium',
     taskType: 'general',
     requiredCapabilities: ['chat'],
-    terms: [
-      'génère une image',
-      'genere une image',
-      'crée une image',
-      'cree une image',
-      'dessine',
-      'illustration de',
-      'image de',
-      'photo réaliste de',
-      'photo realiste de',
-      'generate an image',
-      'create an image',
-      'draw',
-      'make an image',
-      // Wolof equivalents (verified: nataal/natal means draw/image)
-      'nataal',
-      'natal',
-      'defal ma nataal',
-      'sosal ma nataal'
-    ],
-    confidence: 0.94
+    matches: hasImageGenerationIntent,
+    confidence: 0.92
   },
   {
     id: 'capture',
     modeId: 'premium',
     taskType: 'document',
-    requiredCapabilities: ['chat'],
-    terms: [
-      'pdf', 'document', 'fichier', 'capture', 'photo', 'image', 'scan', 'résume ce document', 'analyze this document',
-      // Wolof equivalents (verified: kayit/keuyit means paper/document; tënk means summarize/summary)
-      'kayit',
-      'keuyit',
-      'tënk kayit',
-      'teunk kayit'
-    ],
-    confidence: 0.88
+    requiredCapabilities: ['chat', 'document'],
+    matches: hasCaptureIntent,
+    confidence: 0.86
   },
   {
     id: 'write',
     modeId: 'premium',
     taskType: 'writing',
     requiredCapabilities: ['chat'],
-    terms: [
-      'rédige', 'écris', 'write', 'email', 'mail', 'post', 'message', 'lettre',
-      // Wolof equivalents (verified: bind means write; bindal means write for; araf means letter/character; bataaxal/batahal means message/letter)
-      'bind',
-      'bindal',
-      'araf',
-      'bataaxal',
-      'batahal'
-    ],
-    confidence: 0.82
+    matches: hasWritingIntent,
+    confidence: 0.8
   },
   {
     id: 'study',
     modeId: 'premium',
     taskType: 'education',
     requiredCapabilities: ['chat'],
-    terms: [
-      'explique', 'apprends', 'enseigne', 'quiz', 'lesson', 'teach', 'understand', 'compréhension',
-      // Wolof equivalents (NOTE: faramfacce/faramfaye need verification by a native speaker)
-      'leeral',
-      'faramfacce',
-      'faramfaye',
-      'jang',
-      'diang',
-      'jangal',
-      'diangal'
-    ],
-    confidence: 0.82
+    matches: hasStudyIntent,
+    confidence: 0.8
   },
   {
     id: 'work',
     modeId: 'premium',
     taskType: 'reasoning',
     requiredCapabilities: ['chat'],
-    terms: [
-      'plan', 'stratégie', 'decision', 'décision', 'compare', 'devis', 'brief', 'workflow', 'priorité',
-      // Wolof equivalents (NOTE: dogal, natt, pessef/pëssëf need verification by a native speaker)
-      'dogal',
-      'natt',
-      'pessef',
-      'pëssëf'
-    ],
-    confidence: 0.8
+    matches: hasWorkIntent,
+    confidence: 0.78
   },
   {
     id: 'search',
     modeId: 'fast',
     taskType: 'general',
     requiredCapabilities: ['chat'],
-    terms: [
-      'cherche', 'recherche', 'search', 'latest', 'récent', 'news', 'web',
-      // Wolof equivalents (verified: seet/wut means search/look for; xibaar/hibar means news; lu bees means what is new/latest)
-      'seet',
-      'wut',
-      'xibaar',
-      'hibar',
-      'lu bees'
-    ],
+    matches: hasExplicitSearchIntent,
     confidence: 0.84
   },
   {
@@ -164,14 +105,7 @@ const INTENT_KEYWORDS: Array<{
     modeId: 'fast',
     taskType: 'general',
     requiredCapabilities: ['chat'],
-    terms: [
-      'dicte', 'dictée', 'voice', 'vocal', 'spoken', 'note vocale',
-      // Wolof equivalents (NOTE: kaddoo/kaddo needs verification by a native speaker)
-      'waxal',
-      'baat',
-      'kaddoo',
-      'kaddo'
-    ],
+    matches: hasVoiceIntent,
     confidence: 0.78
   },
   {
@@ -179,14 +113,7 @@ const INTENT_KEYWORDS: Array<{
     modeId: 'auto',
     taskType: 'reasoning',
     requiredCapabilities: ['chat'],
-    terms: [
-      'souviens', 'remember', 'mémoire', 'memory', 'ce que tu sais de moi',
-      // Wolof equivalents (NOTE: fataliku/fattalikoo need verification by a native speaker)
-      'fataliku',
-      'fattalikoo',
-      'lu ma waxoon',
-      'luma waxon'
-    ],
+    matches: hasMemoryIntent,
     confidence: 0.78
   }
 ];
@@ -230,8 +157,7 @@ function containsLikelyImageMention(text: string): boolean {
 function findEarlierGenerationRequest(messages: Message[]): Message | undefined {
   return [...messages].reverse().find((message) => {
     if (message.role !== 'user') return false;
-    const normalized = stripAccents(message.content.toLowerCase());
-    return GENERATION_VERBS.some((verb) => normalized.includes(verb));
+    return hasImageGenerationIntent(message.content);
   });
 }
 
@@ -362,7 +288,7 @@ export function resolvePetawIntent(options: ResolveIntentOptions): ResolvedPetaw
     };
   }
 
-  const match = INTENT_KEYWORDS.find((candidate) => candidate.terms.some((term) => latestUserText.includes(term)));
+  const match = INTENT_KEYWORDS.find((candidate) => candidate.matches(latestUserText));
   if (match) {
     return {
       id: match.id,
@@ -421,27 +347,131 @@ function stripAccents(str: string): string {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
+function normalizeForIntent(text: string): string {
+  return stripAccents(text.toLowerCase())
+    .replace(/[’']/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function wordsForIntent(text: string): string[] {
+  return normalizeForIntent(text)
+    .split(/\s+/)
+    .filter(Boolean);
+}
+
+function hasWord(text: string, word: string): boolean {
+  return wordsForIntent(text).includes(stripAccents(word.toLowerCase()));
+}
+
+function hasAnyWord(text: string, words: string[]): boolean {
+  const tokens = new Set(wordsForIntent(text));
+  return words.some((word) => tokens.has(stripAccents(word.toLowerCase())));
+}
+
+function hasPhrase(text: string, phrase: string): boolean {
+  const normalized = normalizeForIntent(text);
+  const normalizedPhrase = normalizeForIntent(phrase).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^a-z0-9])${normalizedPhrase}([^a-z0-9]|$)`).test(normalized);
+}
+
+function hasAnyPhrase(text: string, phrases: string[]): boolean {
+  return phrases.some((phrase) => hasPhrase(text, phrase));
+}
+
+function hasImageGenerationIntent(text: string): boolean {
+  const normalized = normalizeForIntent(text);
+  const hasImageSubject = hasAnyWord(normalized, IMAGE_TRIGGER_WORDS) ||
+    hasAnyPhrase(normalized, ['logo', 'poster', 'affiche', 'avatar', 'illustration', 'dessin']);
+
+  if (hasAnyPhrase(normalized, [
+    'genere une image',
+    'genere moi une image',
+    'cree une image',
+    'cree moi une image',
+    'photo realiste de',
+    'illustration de',
+    'generate an image',
+    'create an image',
+    'make an image',
+    'defal ma nataal',
+    'sosal ma nataal'
+  ])) {
+    return true;
+  }
+
+  if (hasAnyWord(normalized, ['dessine', 'dessiner', 'illustre', 'illustrer']) && !hasAnyPhrase(normalized, ['dessine moi une conclusion', 'draw a conclusion'])) {
+    return true;
+  }
+
+  return hasImageSubject && GENERATION_VERBS.some((verb) => hasWord(normalized, verb));
+}
+
+function hasCaptureIntent(text: string): boolean {
+  const hasDocumentSubject = hasAnyWord(text, ['pdf', 'document', 'fichier', 'capture', 'scan', 'screenshot', 'kayit', 'keuyit']) ||
+    hasAnyPhrase(text, ['piece jointe', 'pièce jointe', 'this document', 'ce document', 'ce fichier', 'tënk kayit', 'teunk kayit']);
+  const hasImageSubject = hasAnyWord(text, ['photo', 'image', 'screenshot']);
+  const asksAnalysis = hasAnyWord(text, ['analyse', 'analyser', 'résume', 'resume', 'summarize', 'extract', 'extrait', 'lis', 'read']) ||
+    hasAnyPhrase(text, ['explique ce document', 'analyze this document', 'analyze this image', 'what is in this image', 'que contient cette image']);
+
+  return hasDocumentSubject || (hasImageSubject && asksAnalysis);
+}
+
+function hasWritingIntent(text: string): boolean {
+  const writingAction = hasAnyWord(text, ['redige', 'ecris', 'écris', 'write', 'draft', 'compose', 'reformule', 'rewrite', 'bind', 'bindal']);
+  const writingObject = hasAnyWord(text, ['email', 'mail', 'post', 'message', 'lettre', 'copy', 'bio', 'caption', 'bataaxal', 'batahal']) ||
+    hasAnyPhrase(text, ['lettre de motivation', 'cover letter']);
+  return writingAction || (writingObject && hasAnyPhrase(text, ['aide moi', 'help me', 'peux tu']));
+}
+
+function hasStudyIntent(text: string): boolean {
+  return hasAnyWord(text, ['explique', 'apprends', 'enseigne', 'quiz', 'lesson', 'teach', 'comprehension', 'leeral', 'jangal', 'diangal']) ||
+    hasAnyPhrase(text, ['aide moi a comprendre', 'help me understand', 'fais moi reviser', 'prepare un quiz']);
+}
+
+function hasWorkIntent(text: string): boolean {
+  return hasAnyWord(text, ['strategie', 'stratégie', 'decision', 'décision', 'compare', 'devis', 'brief', 'workflow', 'priorite', 'priorité']) ||
+    hasAnyPhrase(text, ['plan d action', 'plan de travail', 'business plan', 'roadmap', 'aide moi a choisir']);
+}
+
+function hasExplicitSearchIntent(text: string): boolean {
+  return hasAnyWord(text, ['cherche', 'recherche', 'search', 'latest', 'recent', 'récent', 'recents', 'news', 'actualité', 'actualite']) ||
+    hasAnyPhrase(text, ['sur le web', 'recherche web', 'look it up', 'check online', 'lu bees']);
+}
+
+function hasVoiceIntent(text: string): boolean {
+  return hasAnyWord(text, ['dicte', 'dictée', 'dictee', 'voice', 'vocal', 'spoken', 'waxal']) ||
+    hasAnyPhrase(text, ['note vocale', 'message vocal', 'voice note']);
+}
+
+function hasMemoryIntent(text: string): boolean {
+  return hasAnyWord(text, ['souviens', 'remember', 'memoire', 'mémoire', 'memory']) ||
+    hasAnyPhrase(text, ['ce que tu sais de moi', 'ce que tu sais sur moi', 'lu ma waxoon', 'luma waxon']);
+}
+
 const REALTIME_KEYWORDS = [
   // French
-  'qui est', 'qui sont', 'quel est', 'quelle est', 'quels sont', 'quelles sont',
   'actualité', 'actualite', 'météo', 'meteo', 'score', 'match', 'élection', 'election',
-  'prix de', 'aujourd\'hui', 'cette semaine', 'en ce moment', 'bourse', 'classement',
+  'prix de', 'bourse', 'classement',
   'dernier événement', 'derniers événements',
   // English
-  'who is', 'who are', 'what is', 'what are', 'news', 'weather', 'match score',
-  'election', 'stock price', 'today', 'this week', 'currently', 'latest events',
+  'news', 'weather', 'match score',
+  'election', 'stock price', 'latest events',
   // Wolof
-  'kan la', 'kan lan', 'lan la', 'lan lan', 'xibaar', 'hibar', 'tey', 'seyt',
+  'kan la', 'kan lan', 'lan la', 'lan lan', 'xibaar', 'hibar', 'seyt',
   'jaww', 'lu bees', 'lu bes'
 ];
 
 export function detectRealtimeQuery(text: string): boolean {
   if (!text) return false;
-  const clean = stripAccents(text.toLowerCase().trim());
-  return REALTIME_KEYWORDS.some((kw) => {
-    const cleanKw = stripAccents(kw);
-    return clean.includes(cleanKw);
-  });
+  const clean = normalizeForIntent(text);
+  const hasRealtimeKeyword = REALTIME_KEYWORDS.some((kw) => hasPhrase(clean, kw));
+  if (hasRealtimeKeyword) return true;
+
+  const asksCurrentRole = /^(qui est|qui sont|who is|who are)\s+.*\b(president|président|presidente|ministre|ceo|dirigeant|leader|maire|gouverneur|coach|entraineur|entraîneur)\b/.test(clean);
+  const asksMarketData = hasAnyPhrase(clean, ['prix actuel', 'current price', 'stock price', 'cours de', 'exchange rate', 'taux de change']);
+  return asksCurrentRole || asksMarketData || hasExplicitSearchIntent(clean);
 }
 
 export function detectConversationLanguage(text: string): 'fr' | 'en' | 'wo' {

@@ -1,0 +1,2 @@
+-- Historical baseline already applied to the linked Supabase project.
+-- The original migration predates this repository's local migration history.

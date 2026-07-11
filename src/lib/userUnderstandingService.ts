@@ -15,47 +15,74 @@ export interface UserContext {
 }
 
 const LOCAL_STORAGE_KEY = 'petaw_user_context';
+let cachedUserId: string | null = null;
+let cachedContext: UserContext | null = null;
+let pendingContext: Promise<UserContext> | null = null;
+let profileDataApiUnavailable = false;
+
+function cacheContext(userId: string, context: UserContext): UserContext {
+  cachedUserId = userId;
+  cachedContext = context;
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(context));
+  return context;
+}
 
 export const userUnderstandingService = {
   async getUserContext(userId: string): Promise<UserContext> {
     const fallback = this.getLocalFallback();
-    if (!supabase) {
+    if (!supabase || profileDataApiUnavailable) {
       return fallback;
     }
 
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('first_name, last_name, dob, preferences')
-        .eq('id', userId)
-        .single();
+    if (cachedUserId === userId && cachedContext) {
+      return cachedContext;
+    }
 
-      if (error || !data) {
-        return fallback;
+    if (cachedUserId === userId && pendingContext) {
+      return pendingContext;
+    }
+
+    cachedUserId = userId;
+    pendingContext = (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('first_name, last_name, dob, preferences')
+          .eq('id', userId)
+          .maybeSingle();
+
+        if (error || !data) {
+          if (error?.code === 'PGRST205') {
+            profileDataApiUnavailable = true;
+          }
+          return cacheContext(userId, fallback);
+        }
+
+        const prefs = data.preferences || {};
+        const context: UserContext = {
+          firstName: data.first_name || fallback.firstName,
+          lastName: data.last_name || fallback.lastName,
+          dob: data.dob || fallback.dob,
+          preferredLanguage: prefs.preferredLanguage || fallback.preferredLanguage,
+          country: prefs.country || fallback.country,
+          timezone: prefs.timezone || fallback.timezone,
+          goals: prefs.goals || fallback.goals,
+          interests: prefs.interests || fallback.interests,
+          profession: prefs.profession || fallback.profession,
+          technicalLevel: prefs.technicalLevel || fallback.technicalLevel,
+          preferredResponseLanguage: prefs.preferredResponseLanguage || fallback.preferredResponseLanguage,
+        };
+
+        return cacheContext(userId, context);
+      } catch (err) {
+        console.warn('Error fetching user context from Supabase, returning local fallback:', err);
+        return cacheContext(userId, fallback);
+      } finally {
+        pendingContext = null;
       }
+    })();
 
-      const prefs = data.preferences || {};
-      const context: UserContext = {
-        firstName: data.first_name || fallback.firstName,
-        lastName: data.last_name || fallback.lastName,
-        dob: data.dob || fallback.dob,
-        preferredLanguage: prefs.preferredLanguage || fallback.preferredLanguage,
-        country: prefs.country || fallback.country,
-        timezone: prefs.timezone || fallback.timezone,
-        goals: prefs.goals || fallback.goals,
-        interests: prefs.interests || fallback.interests,
-        profession: prefs.profession || fallback.profession,
-        technicalLevel: prefs.technicalLevel || fallback.technicalLevel,
-        preferredResponseLanguage: prefs.preferredResponseLanguage || fallback.preferredResponseLanguage,
-      };
-
-      // Sync local storage
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(context));
-      return context;
-    } catch (err) {
-      console.warn('Error fetching user context from Supabase, returning local fallback:', err);
-      return fallback;
-    }
+    return pendingContext;
   },
 
   async updateUserContext(userId: string, partialContext: Partial<UserContext>): Promise<UserContext> {
@@ -63,9 +90,9 @@ export const userUnderstandingService = {
     const updated = { ...current, ...partialContext };
 
     // Update locally
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+    cacheContext(userId, updated);
 
-    if (!supabase) {
+    if (!supabase || profileDataApiUnavailable) {
       return updated;
     }
 
