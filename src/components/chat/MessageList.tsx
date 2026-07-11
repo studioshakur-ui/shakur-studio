@@ -231,25 +231,17 @@ export function MessageList({ messages, isStreaming, isSearching, language, work
       );
     }
 
-    const activeLabel = workStatus.steps[workStatus.activeStep] ?? workStatus.title;
-
     return (
-      <div className="assistant-workboard-warm" role="status" aria-live="polite">
-        <div className="assistant-work-orbit-warm" aria-hidden="true">
-          <span className="assistant-work-orbit-core-warm" />
-          <span className="assistant-work-orbit-ring-warm" />
-        </div>
-        <div className="assistant-workboard-content-warm">
-          <div className="assistant-workboard-kicker-warm">PETAW</div>
-          <div className="assistant-workboard-head-warm">
-            <span className="assistant-workboard-title-warm">{workStatus.title}</span>
-            <span className="assistant-workboard-separator-warm">·</span>
-            <span key={activeLabel} className="assistant-workboard-active-warm">{activeLabel}</span>
-          </div>
-          <span className="assistant-workboard-detail-warm">{workStatus.detail}</span>
-          <div className="assistant-work-progress-warm" aria-hidden="true">
-            <span style={{ width: `${workStatus.progress}%` }} />
-          </div>
+      <div className="assistant-thinking-warm" role="status" aria-live="polite">
+        <span className="assistant-thinking-dots-warm" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+        </span>
+        <div className="assistant-thinking-line-warm">
+          <span className="assistant-thinking-title-warm">{workStatus.title}</span>
+          <span className="assistant-thinking-separator-warm">—</span>
+          <span key={workStatus.detail} className="assistant-thinking-detail-warm">{workStatus.detail}</span>
         </div>
       </div>
     );

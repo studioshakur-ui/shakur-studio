@@ -997,7 +997,7 @@ function buildWorkStatus(
     switch (phase) {
       case 'uploading':
         return {
-          title: 'Préparation des fichiers',
+          title: 'PETAW prépare les fichiers',
           detail: context.uploadingCount > 1 ? `${context.uploadingCount} fichiers envoyés au serveur` : 'Envoi du fichier au serveur',
           steps: ['Upload', 'Analyse', 'Contexte', 'Rédaction'],
           activeStep: 0,
@@ -1005,7 +1005,7 @@ function buildWorkStatus(
         };
       case 'document_processing':
         return {
-          title: 'Lecture documentaire',
+          title: 'PETAW lit le document',
           detail: processingCount > 0 ? `${processingCount} document(s) en cours d’analyse` : 'Extraction et OCR serveur',
           steps: ['Upload', 'Analyse', 'Contexte', 'Rédaction'],
           activeStep: 1,
@@ -1013,7 +1013,7 @@ function buildWorkStatus(
         };
       case 'retrieving':
         return {
-          title: 'Assemblage du contexte',
+          title: 'PETAW rassemble le contexte',
           detail: readyCount > 0 ? `${readyCount} document(s) prêts pour la réponse` : 'Sélection des passages utiles',
           steps: ['Upload', 'Analyse', 'Contexte', 'Rédaction'],
           activeStep: 2,
@@ -1021,7 +1021,7 @@ function buildWorkStatus(
         };
       case 'researching':
         return {
-          title: 'Recherche en direct',
+          title: 'PETAW recherche',
           detail: 'Vérification des informations et consolidation des sources',
           steps: ['Recherche', 'Vérification', 'Synthèse', 'Rédaction'],
           activeStep: researchStep,
@@ -1029,7 +1029,7 @@ function buildWorkStatus(
         };
       case 'writing':
         return {
-          title: 'Rédaction',
+          title: 'PETAW rédige',
           detail: 'PETAW formule la réponse finale',
           steps: ['Comprendre', 'Structurer', 'Rédiger', 'Finaliser'],
           activeStep: 3,
@@ -1037,7 +1037,7 @@ function buildWorkStatus(
         };
       default:
         return {
-          title: 'Réflexion',
+          title: 'PETAW réfléchit',
           detail: context.workTick < 2 ? 'Lecture de ta demande' : context.workTick < 4 ? 'Mise en relation des éléments utiles' : 'Construction d’une réponse claire',
           steps: ['Comprendre', 'Relier', 'Structurer', 'Rédiger'],
           activeStep: thinkingStep,
@@ -1049,7 +1049,7 @@ function buildWorkStatus(
   switch (phase) {
     case 'uploading':
       return {
-        title: 'Preparing files',
+        title: 'PETAW is preparing the files',
         detail: context.uploadingCount > 1 ? `${context.uploadingCount} files are being sent to the server` : 'Sending file to the server',
         steps: ['Upload', 'Analysis', 'Context', 'Writing'],
         activeStep: 0,
@@ -1057,7 +1057,7 @@ function buildWorkStatus(
       };
     case 'document_processing':
       return {
-        title: 'Document reading',
+        title: 'PETAW is reading the document',
         detail: processingCount > 0 ? `${processingCount} document(s) are being analyzed` : 'Server extraction and OCR in progress',
         steps: ['Upload', 'Analysis', 'Context', 'Writing'],
         activeStep: 1,
@@ -1065,7 +1065,7 @@ function buildWorkStatus(
       };
     case 'retrieving':
       return {
-        title: 'Building context',
+        title: 'PETAW is gathering context',
         detail: readyCount > 0 ? `${readyCount} document(s) ready for answer synthesis` : 'Selecting the most useful passages',
         steps: ['Upload', 'Analysis', 'Context', 'Writing'],
         activeStep: 2,
@@ -1073,7 +1073,7 @@ function buildWorkStatus(
       };
     case 'researching':
       return {
-        title: 'Live research',
+        title: 'PETAW is researching',
         detail: 'Checking facts and consolidating sources',
         steps: ['Search', 'Verify', 'Synthesize', 'Write'],
         activeStep: researchStep,
@@ -1081,7 +1081,7 @@ function buildWorkStatus(
       };
     case 'writing':
       return {
-        title: 'Writing',
+        title: 'PETAW is writing',
         detail: 'PETAW is composing the final answer',
         steps: ['Understand', 'Structure', 'Write', 'Polish'],
         activeStep: 3,
@@ -1089,7 +1089,7 @@ function buildWorkStatus(
       };
     default:
       return {
-        title: 'Thinking',
+        title: 'PETAW is thinking',
         detail: context.workTick < 2 ? 'Reading your request' : context.workTick < 4 ? 'Connecting the useful elements' : 'Building a clear response',
         steps: ['Understand', 'Connect', 'Structure', 'Write'],
         activeStep: thinkingStep,

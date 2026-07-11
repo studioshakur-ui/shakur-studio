@@ -3204,123 +3204,78 @@ main {
               background-color 0.2s ease;
 }
 
-.assistant-workboard-warm {
-  display: grid;
-  grid-template-columns: 42px minmax(0, 1fr);
-  align-items: center;
-  gap: 14px;
-  width: min(600px, 100%);
-  padding: 16px 18px;
-  border: 1px solid rgba(216, 200, 184, 0.1);
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(255, 248, 238, 0.045), rgba(255, 248, 238, 0.012));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025);
-  overflow: hidden;
-}
-
-.assistant-work-orbit-warm {
+.assistant-thinking-warm {
   position: relative;
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  max-width: 100%;
+  padding: 3px 0;
 }
 
-.assistant-work-orbit-core-warm {
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--accent-strong);
-  box-shadow: 0 0 18px rgba(217, 119, 6, 0.45);
-  animation: assistant-work-core 1.8s ease-in-out infinite;
-}
-
-.assistant-work-orbit-ring-warm {
+.assistant-thinking-dots-warm {
   position: absolute;
-  inset: 3px;
+  right: calc(100% + 10px);
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex: 0 0 auto;
+  width: 21px;
+}
+
+.assistant-thinking-dots-warm i {
+  width: 4px;
+  height: 4px;
   border-radius: 999px;
-  border: 1px solid rgba(216, 200, 184, 0.2);
-  border-top-color: var(--accent);
-  animation: assistant-work-spin 2.4s linear infinite;
+  background: var(--accent);
+  opacity: 0.28;
+  animation: assistant-thinking-dot 1.35s ease-in-out infinite;
 }
 
-.assistant-workboard-content-warm {
-  min-width: 0;
-  display: grid;
-  gap: 4px;
+.assistant-thinking-dots-warm i:nth-child(2) {
+  animation-delay: 0.16s;
 }
 
-.assistant-workboard-kicker-warm {
-  color: var(--accent-strong);
-  font-size: 0.62rem;
-  font-weight: 650;
-  letter-spacing: 0.16em;
+.assistant-thinking-dots-warm i:nth-child(3) {
+  animation-delay: 0.32s;
 }
 
-.assistant-workboard-head-warm {
+.assistant-thinking-line-warm {
   display: flex;
   align-items: baseline;
   gap: 7px;
   min-width: 0;
-}
-
-.assistant-workboard-title-warm {
-  font-size: 0.96rem;
-  line-height: 1.4;
-  font-weight: 600;
-  color: var(--platinum);
-}
-
-.assistant-workboard-separator-warm {
-  color: rgba(216, 200, 184, 0.32);
-}
-
-.assistant-workboard-active-warm {
-  color: var(--bone);
   font-size: 0.9rem;
-  animation: assistant-work-label 0.5s ease both;
-}
-
-.assistant-workboard-detail-warm {
-  font-size: 0.8rem;
   line-height: 1.5;
+}
+
+.assistant-thinking-title-warm {
+  color: var(--bone);
+  font-weight: 540;
+  white-space: nowrap;
+}
+
+.assistant-thinking-separator-warm {
+  color: rgba(216, 200, 184, 0.24);
+}
+
+.assistant-thinking-detail-warm {
   color: var(--steel);
-}
-
-.assistant-work-progress-warm {
-  height: 2px;
-  margin-top: 6px;
-  border-radius: 999px;
-  background: rgba(216, 200, 184, 0.08);
+  white-space: nowrap;
   overflow: hidden;
+  text-overflow: ellipsis;
+  animation: assistant-thinking-copy 0.45s ease both;
 }
 
-.assistant-work-progress-warm > span {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, rgba(168, 116, 78, 0.7), var(--accent-strong));
-  box-shadow: 0 0 10px rgba(217, 119, 6, 0.28);
-  transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+@keyframes assistant-thinking-dot {
+  0%, 70%, 100% { opacity: 0.24; transform: translateY(0); }
+  35% { opacity: 1; transform: translateY(-2px); }
 }
 
-@keyframes assistant-work-core {
-  0%, 100% {
-    transform: scale(0.9);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.08);
-    opacity: 1;
-  }
-}
-
-@keyframes assistant-work-spin {
-  to { transform: rotate(360deg); }
-}
-
-@keyframes assistant-work-label {
-  from { opacity: 0.35; transform: translateY(2px); }
+@keyframes assistant-thinking-copy {
+  from { opacity: 0; transform: translateY(2px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -3742,25 +3697,17 @@ main {
     display: none;
   }
 
-  .assistant-workboard-warm {
-    grid-template-columns: 34px minmax(0, 1fr);
-    gap: 10px;
-    padding: 14px;
-    border-radius: 16px;
-  }
-
-  .assistant-work-orbit-warm {
-    width: 30px;
-    height: 30px;
-  }
-
-  .assistant-workboard-head-warm {
+  .assistant-thinking-line-warm {
     gap: 5px;
+    font-size: 0.84rem;
   }
 
-  .assistant-workboard-title-warm,
-  .assistant-workboard-active-warm {
-    font-size: 0.84rem;
+  .assistant-thinking-detail-warm {
+    max-width: 46vw;
+  }
+
+  .assistant-thinking-dots-warm {
+    display: none;
   }
 }
 
